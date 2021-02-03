@@ -19,8 +19,8 @@
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 </head>
-<body class="bg-dark">
-    <div id="app" class="bg-secondary">
+<body class="bootstrap-dark">
+    <div id="app" class="">
 
         <!-- Get the Navbar -->
         @include('inc.navbar')
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Get the main App -->
-        <main class="py-4">
+        <main class="py-4 container-lg text-white ">
             @yield('content')
         </main>
 

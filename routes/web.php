@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,10 +17,16 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', 'PageController@index')->name('index');
 Route::get('/about', 'PageController@about')->name('about');
 
-Route::get('/clips', 'PageController@clips')->name('clips')->middleware('auth');
+Route::middleware('auth')->group(function() {
+    Route::namespace('Admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
+        Route::get('/videos/index/{category?}', 'VideoController@index')->name('videos.index');
+        Route::resource('/videos', 'VideoController')->except('index');
 
-Route::namespace('Admin')->prefix('admin')->name('admin.')->group(function() {
-    Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
+        Route::resource('/categories', 'CategoryController')->except(['index', 'show', 'edit']);
+        Route::resource('/users', 'UserController')->only(['update', 'destroy']);
+
+    });
 });
 
 Auth::routes();

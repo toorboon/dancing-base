@@ -13,7 +13,7 @@
             <!-- Left Side Of Navbar -->
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ route('about') }}" title="Who is responsible for this thing?">About</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('clips') }}" title="Click here to see all the clips in the database">Clips</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('admin.videos.index') }}" title="Click here to see all the clips in the database">Videos</a></li>
 
             </ul>
         @endauth
@@ -44,8 +44,10 @@
 
                             <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Dashboard</a>
                             @if (Route::has('register'))
-                                <a class="dropdown-item" href="{{ route('register') }}">{{ __('Register') }}</a>
+                                <a class="dropdown-item" href="{{ route('register') }}">Create User</a>
                             @endif
+                            <a class="dropdown-item" href="{{ route('admin.categories.create') }}">Create Category</a>
+                            <a class="dropdown-item" href="{{ route('admin.videos.create') }}">Upload Video</a>
                         </div>
                     </li>
                 @endguest

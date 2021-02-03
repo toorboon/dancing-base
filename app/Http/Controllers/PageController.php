@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\User;
 use Illuminate\Http\Request;
 
 class PageController extends Controller
@@ -21,15 +22,11 @@ class PageController extends Controller
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function about(){
-        return view('pages.about');
-    }
+        // add Role the moment you introduced a simple role system to the app
+        // $adminRole = Role::where('name', 'Admin')->pluck('id');
+        $responsibleAdmin = User::first();
 
-    /**
-     * Show the clips page.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
-    public function clips(){
-        return view('pages.clips');
+        return view('pages.about')
+            ->with('responsibleAdmin', $responsibleAdmin);;
     }
 }

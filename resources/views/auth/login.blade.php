@@ -11,7 +11,7 @@
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
                         {{--                    Only for Demo Issues comment this div in--}}
-                        <div class="bg-light text-center mx-auto mt-3 p-2">
+                        <div class="text-center mx-auto mt-3 p-2">
                             <p class="mb-0">Login-user = horstman@gmail.com</p>
                             <p>Password = admin</p>
                         </div>
