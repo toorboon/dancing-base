@@ -5,7 +5,7 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">Register Category</div>
+                    <div class="card-header">{{__('Create Category')}}</div>
 
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.categories.store') }}">
@@ -23,15 +23,14 @@
                                 <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
 
                                 <div class="col-md-6">
-                                    <input id="description" type="text" class="form-control" name="description" value="{{ old('description') }}" autocomplete="description">
+                                    <textarea class="form-control" name="description" value="{{ old('description') }}"></textarea>
                                 </div>
                             </div>
 
                             <div class="form-group row mb-0">
-                                <div class="col-md-6 offset-md-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        {{ __('Register') }}
-                                    </button>
+                                <div class="col-lg-6 offset-lg-4 offset-md-4">
+                                    <button type="submit" class="btn btn-primary">{{ __('Create Category') }}</button>
+                                    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Back</a>
                                 </div>
                             </div>
 

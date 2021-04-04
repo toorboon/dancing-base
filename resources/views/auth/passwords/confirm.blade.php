@@ -32,6 +32,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     {{ __('Confirm Password') }}
                                 </button>
+                                <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Back</a>
 
                                 @if (Route::has('password.request'))
                                     <a class="btn btn-link" href="{{ route('password.request') }}">

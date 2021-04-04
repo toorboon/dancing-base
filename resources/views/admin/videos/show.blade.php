@@ -19,10 +19,29 @@
             </form>
         </div>
     </div>
-    <div id="information" class="bg-dark p-2">
-        <h6>Title: {{ $video->title }}</h6>
-        <h6>Desc: {{ $video->description }}</h6>
-        <h6>Tag: {{ $video->tag }}</h6>
-        <h6>Cat: {{ $video->category->title }}</h6>
-    </div>
+
+    <table id="information_box" class="table table-sm table-dark table-bordered">
+        <tbody>
+            <tr>
+                <th scope="row">Title:</th>
+                <td>{{ $video->title }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Desc:</th>
+                <td id="description_box">{{ $video->description }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Tag:</th>
+                <td>{{ $video->tag }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Cat:</th>
+                <td>{{ $video->category->title }}</td>
+            </tr>
+            <tr>
+                <th scope="row">Rate:</th>
+                <td>{{ $video->category->rate }}</td>
+            </tr>
+        </tbody>
+    </table>
 @endsection

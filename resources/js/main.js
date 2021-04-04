@@ -4,18 +4,38 @@ $(document).ready(function(){
     controlAccordion();
     $('.video').hover( hoverVideo, hideVideo );
 
+// Save session to localStorage so the Video dropdown can be prefilled everytime you come back to _/videos/index
+//     test = navigationType()
+//     console.log('navigationType' + test)
+//     console.log('oldCategory: ' + localStorage.getItem('oldCategory'))
+//     console.log('categoryIndex: ' + $('#categoryindex').val());
+
+    var oldCategory = localStorage.getItem('oldCategory');
+    var categoryElement = $('#categoryindex');
+
+    if (oldCategory && categoryElement.length && oldCategory != categoryElement.val()) {
+        $('#categoryindex').val(localStorage.getItem('oldCategory')).parent().submit();
+    }
+
 // Set Event Handler
-    // event-handler, if clicked on single video in /videos/show
-    // $(document).on('click', '.single_video', function(){
-    //     console.log('video_id: ' + this.id);
-    //     console.log(this)
-    //     toggleFullscreen();
-    // })
+    // Necessary for table redrawing on Dashboard view
+    $(window).bind("resize",function(){
+        console.log($(window).width());
+        tackleClasses($(this));
+    });
 
     // event-handler vor displaying Actions container if hovering over it
     $(document).on('click', '.actions', function(e){
         e.stopPropagation();
         $(this).children('div').toggleClass('d-flex');
+    });
+
+    // event-handler to fetch Delete click and introduce an alert before deleting the video
+    $(document).on('click', 'button:contains("Delete")', function(e){
+        e.preventDefault();
+        if (getConfirmation()) {
+            $(this).parent().submit();
+        }
     });
 
     // event-handler for making the video clickable in the video overview
@@ -32,23 +52,59 @@ $(document).ready(function(){
     });
 
     // this checks if in the /videos/index the select for choosing the category was changed
-    $(document).on('change', '#categoryindex', function(){
+    $(document).on('change', '#categoryindex', function(e){
+        localStorage.setItem('oldCategory',$(this, "option:selected").val());
         this.parentNode.submit();
     })
 
 // Functions
-    // make videos full screen mode or exit, if necessary
-    // function toggleFullscreen(e) {
-    //     let test = e.querySelector("video");
-    //     console.log(test)
-    //     if (!document.fullscreenElement) {
-    //         test.requestFullscreen().catch(err => {
-    //             alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-    //         });
-    //     } else {
-    //         document.exitFullscreen();
-    //     }
-    // }
+    // removes table related bootstrap classes if screen gets to small
+    function tackleClasses(window){
+        if($(window).width() <760){
+            $('.table_card').removeClass('table-sm')
+        }
+        else{
+            $('.table_card').addClass('table-sm')
+        }
+    }
+
+    // checks for confirmation, before deleting a video
+    function getConfirmation() {
+        var retVal = confirm("Do you really want to delete this element?");
+        return retVal === true;
+    }
+
+    // analyse if the page was refreshed by a event as listed below
+      function navigationType() {
+
+        var result;
+        var p;
+
+        if (window.performance.navigation) {
+            result = window.performance.navigation;
+            if (result == 255) {
+                result = 4
+            } // 4 is my invention!
+        }
+
+        if (window.performance.getEntriesByType("navigation")) {
+            p = window.performance.getEntriesByType("navigation")[0].type;
+
+            if (p == 'navigate') {
+                result = 0
+            }
+            if (p == 'reload') {
+                result = 1
+            }
+            if (p == 'back_forward') {
+                result = 2
+            }
+            if (p == 'prerender') {
+                result = 3
+            } //3 is my invention!
+        }
+        return result;
+    }
 
     // checks if something was changed inside an input field
     function gotChanged(element){

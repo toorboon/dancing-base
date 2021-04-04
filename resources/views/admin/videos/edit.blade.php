@@ -23,7 +23,7 @@
                                 <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
 
                                 <div class="col-md-6">
-                                    <input id="description" type="text" class="form-control" name="description" value="{{ old('description') ?? $video->description }}" autocomplete="description">
+                                    <textarea id="description" class="form-control" name="description" autocomplete="description">{{ old('description') ?? $video->description }}</textarea>
                                 </div>
                             </div>
 
@@ -65,6 +65,7 @@
                                     <button type="submit" class="btn btn-primary">
                                         {{ __('Edit Video') }}
                                     </button>
+                                    <a href="{{ route('admin.videos.show', $video->id) }}" class="btn btn-secondary">Back</a>
                                 </div>
                             </div>
 

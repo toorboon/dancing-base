@@ -5,7 +5,7 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">Register Video</div>
+                    <div class="card-header">Upload Video</div>
 
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.videos.store') }}" enctype="multipart/form-data">
@@ -23,7 +23,7 @@
                                 <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
 
                                 <div class="col-md-6">
-                                    <input id="description" type="text" class="form-control" name="description" value="{{ old('description') ?? 'Krasse Beschreibung 1' }}" autocomplete="description">
+                                    <textarea id="description" class="form-control" name="description" value="{{ old('description') ?? 'Krasse Beschreibung 1' }}" autocomplete="description"></textarea>
                                 </div>
                             </div>
 
@@ -52,15 +52,16 @@
                                 <label for="video" class="col-md-4 col-form-label text-md-right">Upload video</label>
 
                                 <div class="col-md-6">
-                                    <input id="video" name="video" type="file">
+                                    <input id="video" name="video" type="file" required>
                                 </div>
                             </div>
 
                             <div class="form-group row mb-0">
                                 <div class="col-md-6 offset-md-4">
                                     <button type="submit" class="btn btn-primary">
-                                        {{ __('Register') }}
+                                        {{ __('Upload Video') }}
                                     </button>
+                                    <a href="{{ route('admin.videos.index') }}" class="btn btn-secondary">Back</a>
                                 </div>
                             </div>
 

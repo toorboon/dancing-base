@@ -11,15 +11,15 @@
                 </div>
 
                 <form action="{{ route('admin.videos.index') }}" method="get">
-                <select id="categoryindex" class="form-control custom-select" name="category" required title="Please choose category">
-                    <option value="Please choose" disabled @if(!(old('category')) AND !$oldCategory) selected @endif>Please choose</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}"
-                            @if($oldCategory) {{ $oldCategory == $category->id ? 'selected' : '' }}
-                            @else {{ old('category') == $category->id ? 'selected' : '' }}
-                            @endif>{{ $category->title }}</option>
-                    @endforeach
-                </select>
+                    <select id="categoryindex" class="form-control custom-select" name="category" required title="Please choose category">
+                        <option value="Please choose" disabled @if(!(old('category')) AND !$oldCategory) selected @endif>Please choose</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}"
+                                @if($oldCategory) {{ $oldCategory == $category->id ? 'selected' : '' }}
+                                @else {{ old('category') == $category->id ? 'selected' : '' }}
+                                @endif>{{ $category->title }}</option>
+                        @endforeach
+                    </select>
                 </form>
             </div>
         </div>
@@ -34,7 +34,6 @@
                 </a>
                 <div class="dropdown-menu" aria-labelledby="actionDropdown">
                     <a class="dropdown-item" href="{{ route('admin.videos.create') }}">Upload Video</a>
-                    <a class="dropdown-item" href="#">???</a>
                 </div>
             </li>
         </ul>
@@ -49,7 +48,7 @@
                 <div class="card h-100 border-secondary">
                     <div class="embed-responsive embed-responsive-4by3">
                         {{--option menu for each video--}}
-                        <div id="" class="actions d-flex flex-column justify-content-between p-3">
+                        <div class="actions d-flex flex-column justify-content-between p-3">
                             <button type="button" class="btn btn-sm btn-dark">...</button>
                             <div id="" class="buttons d-none flex-column align-items-stretch">
                                 <a href="{{ route('admin.videos.edit', $video->id) }}" class="btn btn-sm btn-secondary mt-1 w-100">Edit</a>
@@ -77,7 +76,9 @@
         </div>
 
     @else
-            <h2 class="bg-dark text-center w-100 mt-5 p-3">There are no videos to display, please choose a category or record stuff!</h2>
+        <div class="row">
+        <h5 class="bg-dark text-center mt-5 mx-auto p-2">Nothing to display, please upload videos!</h5>
+        </div>
     @endif
 
 @endsection

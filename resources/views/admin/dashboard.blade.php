@@ -10,6 +10,7 @@
                 <div class="dropdown-menu" aria-labelledby="actionDropdown">
                     <a class="dropdown-item" href="{{ route('admin.categories.create') }}">Create Category</a>
                     <a class="dropdown-item" href="{{ route('register') }}">Create User</a>
+                    <a class="dropdown-item" href="{{ route('change.password') }}">Change Password</a>
                 </div>
             </li>
         </ul>
@@ -27,7 +28,7 @@
 
                         <div id="category" class="collapse" aria-labelledby="categoryAccordion" data-parent="#dashboardAccordion">
                             <div class="card-body">
-                                <table class="table table-striped  table-sm  table_card">
+                                <table class="table table-sm  table_card">
                                     <thead class="table-info">
                                     <tr>
                                         <th>Title</th>
@@ -50,7 +51,7 @@
                                                     <form action="{{ route('admin.categories.update', $category) }}" method="POST">
                                                         @csrf
                                                         @method('PUT')
-                                                        <input type="text" class="input_change" name="category_description" value="{{ $category->description }}" required>
+                                                        <textarea class="input_change w-100" name="category_description">{{ $category->description }}</textarea>
                                                     </form>
                                                 </td>
                                                 <td class="d-flex">
@@ -79,7 +80,7 @@
                         </div>
                         <div id="user" class="collapse" aria-labelledby="userAccordion" data-parent="#dashboardAccordion">
                             <div class="card-body">
-                                <table class="table table-striped  table-sm  table_card">
+                                <table class="table table-sm  table_card">
                                     <thead class="table-info">
                                     <tr>
                                         <th>Username</th>

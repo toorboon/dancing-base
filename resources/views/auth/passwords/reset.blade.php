@@ -54,6 +54,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     {{ __('Reset Password') }}
                                 </button>
+                                <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Back</a>
                             </div>
                         </div>
                     </form>

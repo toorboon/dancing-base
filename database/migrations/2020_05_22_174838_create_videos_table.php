@@ -22,6 +22,7 @@ class CreateVideosTable extends Migration
             $table->string('tag')->nullable();
             $table->unsignedInteger('category_id');
             $table->unsignedInteger('user_id');
+            $table->unsignedInteger('rating')->nullable();
             $table->timestamps();
         });
     }

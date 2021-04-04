@@ -24,6 +24,7 @@ class VideoController extends Controller
      */
     public function index(Request $request, $oldCategory = null)
     {
+
         // noch überarbeiten, je nachdem, wie das Video Model am Ende aussieht!
         $videos = [];
         $categoryList = Category::all();
@@ -49,9 +50,11 @@ class VideoController extends Controller
      */
     public function create()
     {
+
         $categories = Category::all();
         return view('admin.videos.create')
-            ->with('categories', $categories);
+            ->with('categories', $categories)
+            ;
     }
 
     /**
