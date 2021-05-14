@@ -4,44 +4,75 @@
 
     {{--Select for category--}}
     <div class="row">
-        <div class="col-12">
-            <div class="input-group d-flex justify-content-center">
-                <div class="input-group-prepend">
-                    <label class="input-group-text" for="category">Choose your category</label>
-                </div>
+        <button id="toolboxtoggler" type="button" class="btn btn-block btn-secondary mx-2" data-toogle="collapse" data-target="#toolbox">Toolbox</button>
 
-                <form action="{{ route('admin.videos.index') }}" method="get">
-                    <select id="categoryindex" class="form-control custom-select" name="category" required title="Please choose category">
-                        <option value="Please choose" disabled @if(!(old('category')) AND !$oldCategory) selected @endif>Please choose</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}"
-                                @if($oldCategory) {{ $oldCategory == $category->id ? 'selected' : '' }}
-                                @else {{ old('category') == $category->id ? 'selected' : '' }}
-                                @endif>{{ $category->title }}</option>
-                        @endforeach
-                    </select>
-                </form>
-            </div>
+        {{--Toolbox items--}}
+        <div id="toolbox" class="col-12 collapse mt-2 ">
+            <form action="{{ route('admin.videos.index') }}" method="get">
+                <div class="d-flex flex-column">
+                    <div class="w-100 mb-3 ">
+                        <div class="d-flex flex-sm-nowrap flex-wrap justify-content-center">
+                            <div class="d-flex w-100">
+                                <input id="search" class="form-control text-center" type="text" name="search" placeholder="Full Text Search" title="This field does a full text search for Guests in first name, last name, document, address, gender and notes!" value="{{ old('search') }}">
+                                <button id="clear_search" type="button" class="btn"><strong>&#10539;</strong></button>
+                            </div>
+                            <div class="d-flex mt-2 mt-sm-0">
+                                <button id="reset_video_search" type="button" class="btn btn-dark btn-sm">Reset</button>
+                                <button id="filter" type="submit" class="btn btn-dark btn-sm ml-1">Filter</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{--Single item search and action menu--}}
+                    <div class="d-flex flex-column flex-md-row justify-content-between">
+                        <div class="input-group ">
+                            <div class="d-none d-md-inline input-group-prepend">
+                                <label class="input-group-text" for="category">Search category</label>
+                            </div>
+                            <select id="categoryindex" class="form-control custom-select mb-2 mb-md-0" name="category" required title="Please choose category to be searched">
+                                <option value='all' @if(!($selectedCategory)) selected @endif>All</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ $selectedCategory == $category->id ? 'selected' : '' }}>{{ $category->title }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <div class="d-none d-md-inline input-group-prepend">
+                                <label class="input-group-text" for="rating">Search progress</label>
+                            </div>
+                            <select id="progress" class="form-control custom-select flex-shrink-1 mb-2 mb-md-0" name="progress" required title="Please choose the video progress you are interested in!">
+                                <option value='all' @if(!($selectedProgress)) selected @endif>All</option>
+                                @for($i=0; $i<5; $i++)
+                                    <option value="{{ $i+1 }}" {{ $selectedProgress == $i+1 ? 'selected' : '' }}>{{ $i+1 }} PStar</option>
+                                @endfor
+                            </select>
+                        </div>
+                        {{--Actions navigation--}}
+                        <div class="col-md-4 col-lg-2 p-0 flex-shrink-1">
+                            <ul class="navbar-nav mx-auto">
+                                <li class="nav-item dropdown text-center">
+                                    <a id="actionDropdown" class="btn btn-dark btn-block dropdown-toggle border-secondary" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" v-pre>
+                                        Actions <span class="caret"></span>
+                                    </a>
+                                    <div class="dropdown-menu" aria-labelledby="actionDropdown">
+                                        <a class="dropdown-item" href="{{ route('admin.videos.create') }}">Upload Video</a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </form>
         </div>
     </div>
 
-    {{--Actions navigation--}}
-    <div class="row mt-4">
-        <ul class="navbar-nav mx-auto mb-3">
-            <li class="nav-item dropdown text-center">
-                <a id="actionDropdown" class="btn btn-dark dropdown-toggle border-secondary" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" v-pre>
-                    Actions <span class="caret"></span>
-                </a>
-                <div class="dropdown-menu" aria-labelledby="actionDropdown">
-                    <a class="dropdown-item" href="{{ route('admin.videos.create') }}">Upload Video</a>
-                </div>
-            </li>
-        </ul>
-    </div>
 
     @if(count($videos)>0)
+        {{--Paginator goes here, but you have to solve the url issue with the redirect --}}
+{{--        <div class="d-flex justify-content-center mt-2">{{ $videos->links() }}</div>--}}
 
-        <div class="row row-cols-1 row-cols-md-3  mt-5">
+        <div class="row row-cols-1 row-cols-md-3 mt-3">
             @foreach($videos as $video)
 
             <div class="col mb-4 video" data-href="{{ route('admin.videos.show', $video->id) }}">
@@ -59,16 +90,22 @@
                                 </form>
                             </div>
                         </div>
-                        <video muted class="card-img-top embed-responsive-item"><source src="/storage/videos/{{ $video->timelapse }}" type="video/webm" >
+                        <video id="video_{{ $video->id }}" muted class="card-img-top embed-responsive-item"><source src="/storage/videos/{{ $video->timelapse }}" type="video/webm" >
                             Your browser does not support the video tag!
                         </video>
                     </div>
                     <h5 class="card-header">{{ $video->title }}</h5>
                     <div class="card-body">
                         <small class="card-text">{{ $video->description }}</small>
+                        <p class="card-text">
+                            <span id="rated_index_{{ $video->id }}" class="d-none rated_index" data-index="{{ $video->users->first()->pivot->rated_index ?? '' }}"></span>
+                            @for($i=0; $i<5; $i++)
+                                <span class="voting_stars text-secondary" data-index="{{ $i+1 }}" title="This is the progress bar from {{ $video->users->first()->name }} for '{{ $video->title }}'">&#10022;</span>
+                            @endfor
+                        </p>
                     </div>
                     <div class="card-footer text-muted text-center p-0 m-0">
-                        <small>created {{ $video->created_at->diffInDays() !== 0 ? $video->created_at->diffInDays()." day(s) ago" : 'today' }} by {{ $video->user->name }}</small>
+                        <small>created {{ $video->created_at->diffInDays() !== 0 ? $video->created_at->diffInDays()." day(s) ago" : 'today' }} by {{ $video->videocreator->name }}</small>
                     </div>
                 </div>
             </div>

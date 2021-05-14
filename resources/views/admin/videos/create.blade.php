@@ -15,7 +15,7 @@
                                 <label for="title" class="col-md-4 col-form-label text-md-right">Title</label>
 
                                 <div class="col-md-6">
-                                    <input id="title" type="text" class="form-control" name="title" value="{{ old('title') ?? 'Krasses Video 1' }}" required autocomplete="title" autofocus>
+                                    <input id="title" type="text" class="form-control" name="title" value="{{ old('title') ?? 'Krasses Video 1' }}" required autofocus>
                                 </div>
                             </div>
 
@@ -23,15 +23,19 @@
                                 <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
 
                                 <div class="col-md-6">
-                                    <textarea id="description" class="form-control" name="description" value="{{ old('description') ?? 'Krasse Beschreibung 1' }}" autocomplete="description"></textarea>
+                                    <textarea id="description" class="form-control" name="description"></textarea>
                                 </div>
                             </div>
 
                             <div class="form-group row">
-                                <label for="tag" class="col-md-4 col-form-label text-md-right">Tag</label>
+                                <label for="tags" class="col-md-4 col-form-label text-md-right">Tags</label>
 
                                 <div class="col-md-6">
-                                    <input id="tag" type="text" class="form-control" name="tag" value="{{ old('tag') ?? 'Cuban Salsa' }}" autocomplete="tag">
+                                    <select multiple="multiple" id="tags" class="form-control select2" name="tags[]" title="Please choose/create Tags">
+                                        @foreach($tags as $tag)
+                                            <option value="{{ $tag->normalized }}">{{ $tag->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
 

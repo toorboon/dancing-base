@@ -37,7 +37,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function videos(){
+    public function videoscreated(){
         return $this->hasMany('App\Video');
+    }
+
+    public function videos(){
+        return $this->belongsToMany('App\Video', 'ratings', 'user_id', 'video_id')
+            ->withPivot('rated_index')
+            ->withTimestamps();;
     }
 }

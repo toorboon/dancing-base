@@ -13,17 +13,20 @@
         "axios": "^0.19",
         "bootstrap": "^4.6.0",
         "cross-env": "^7.0",
-        "jquery": "^3.2",
+        "jquery": "^3.6.0",
         "laravel-mix": "^5.0.1",
         "lodash": "^4.17.13",
         "popper.js": "^1.12",
         "resolve-url-loader": "^2.3.1",
         "sass": "^1.20.1",
         "sass-loader": "^8.0.0",
+        "stylus": "^0.54.8",
+        "stylus-loader": "^5.0.0",
         "vue": "^2.5.17",
         "vue-template-compiler": "^2.6.10"
     },
     "dependencies": {
-        "@forevolve/bootstrap-dark": "^1.0.0-alpha.981"
+        "@forevolve/bootstrap-dark": "^1.0.0-alpha.981",
+        "selectize": "^0.12.6"
     }
 }

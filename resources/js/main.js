@@ -2,35 +2,32 @@ $(document).ready(function(){
 
 // Init
     controlAccordion();
+
+    //### Videos ###
     $('.video').hover( hoverVideo, hideVideo );
 
-// Save session to localStorage so the Video dropdown can be prefilled everytime you come back to _/videos/index
-//     test = navigationType()
-//     console.log('navigationType' + test)
-//     console.log('oldCategory: ' + localStorage.getItem('oldCategory'))
-//     console.log('categoryIndex: ' + $('#categoryindex').val());
+    if ($('.rated_index')){
+        $('.rated_index').each(function(i, obj) {
+            let ratedIndex = parseInt($(this).data('index'));
+            drawStars(ratedIndex, obj);
+        });
+    }
 
-    var oldCategory = localStorage.getItem('oldCategory');
-    var categoryElement = $('#categoryindex');
+    $('#tags').select2({
+        tags: true,
+        tokenSeparators: [",", " "],
+    });
 
-    if (oldCategory && categoryElement.length && oldCategory != categoryElement.val()) {
-        $('#categoryindex').val(localStorage.getItem('oldCategory')).parent().submit();
+    // if localStorage toolboxOpen is set you want to display the toolbox open. Only the user can
+    // close the toolbox, once it was opened
+    if (localStorage.getItem('toolboxOpen')){
+        $('#toolbox').collapse('toggle');
     }
 
 // Set Event Handler
-    // Necessary for table redrawing on Dashboard view
-    $(window).bind("resize",function(){
-        console.log($(window).width());
-        tackleClasses($(this));
-    });
 
-    // event-handler vor displaying Actions container if hovering over it
-    $(document).on('click', '.actions', function(e){
-        e.stopPropagation();
-        $(this).children('div').toggleClass('d-flex');
-    });
-
-    // event-handler to fetch Delete click and introduce an alert before deleting the video
+    //### Misc ###
+    // event-handler to fetch Delete click and introduce an alert before deleting any element
     $(document).on('click', 'button:contains("Delete")', function(e){
         e.preventDefault();
         if (getConfirmation()) {
@@ -38,26 +35,149 @@ $(document).ready(function(){
         }
     });
 
-    // event-handler for making the video clickable in the video overview
-    $(document).on('click', 'div[data-href]', function(){
-        window.location = $(this).data('href');
+    //### Dashboard ###
+    // Necessary for table redrawing on Dashboard view
+    $(window).bind("resize",function(){
+        tackleClasses($(this));
     });
 
     // this checks if in the /dashboard an input was changed
-    $(document).on('focusout', '.input_change', function(e){
+    $(document).on('focusout', '.input_change', function(){
         if (!gotChanged(this)) {
             return false;
         }
         this.parentNode.submit();
     });
 
+    // ### Videos ###
+    //Draw stars for video rating
+    $('.voting_stars').mouseover(function() {
+        let ratedIndexElement = $(this).siblings('.rated_index');
+        //Fetch the index data attribute from the element you are hovering over
+        let currentIndex = parseInt($(this).data('index'));
+
+        // console.log(ratedIndexElement)
+        // console.log(currentIndex)
+        clearStarColor(ratedIndexElement);
+        drawStars(currentIndex, ratedIndexElement);
+    });
+
+    $('.voting_stars').mouseleave(function() {
+        let ratedIndexElement = $(this).siblings('.rated_index');
+        //Fetch the index from the associated .rated_index element
+        let ratedIndex = parseInt(ratedIndexElement.data('index'));
+
+        clearStarColor(ratedIndexElement);
+        if (ratedIndex){
+            drawStars(ratedIndex, ratedIndexElement);
+        }
+    });
+
+    //Save selected rating and get the videoId
+    $('.voting_stars').on('click', function(e){
+        e.stopPropagation();
+        let ratedIndex = parseInt($(this).data('index'));
+        let videoId = $(this).closest('.card').find('video').attr('id').replace(/[^0-9]/g,'');
+        console.log('ratedIndex: ' + ratedIndex)
+        console.log('video_id: ' + videoId)
+        saveToDB(videoId, ratedIndex);
+    });
+
+    // event-handler for collapsing toolbox in video.index
+    $(document).on('click', '#toolboxtoggler', function(){
+        $('#toolbox').collapse('toggle');
+    });
+
+    $('#toolbox').on('shown.bs.collapse', function(){
+        localStorage.setItem('toolboxOpen', '1');
+    });
+
+    $('#toolbox').on('hide.bs.collapse', function(){
+        localStorage.removeItem(('toolboxOpen'));
+    });
+
+    // event-handler vor opening actions container if clicking on it
+    $(document).on('click', '.actions', function(e){
+        e.stopPropagation();
+        $(this).children('div').toggleClass('d-flex');
+    });
+
+    // event-handler for making the video clickable at /videos/index
+    $(document).on('click', 'div[data-href]', function(){
+        window.location = $(this).data('href');
+    });
+
     // this checks if in the /videos/index the select for choosing the category was changed
-    $(document).on('change', '#categoryindex', function(e){
-        localStorage.setItem('oldCategory',$(this, "option:selected").val());
-        this.parentNode.submit();
-    })
+    $(document).on('change', '#categoryindex', function(){
+        this.closest('form').submit();
+    });
+
+    // this checks if in the /videos/index the select for choosing the progress was changed
+    $(document).on('change', '#progress', function(){
+        this.closest('form').submit();
+    });
+
+    // Clears the search field on Video overview
+    $(document).on('click', '#clear_search', function(){
+        clearElementValue('search');
+    });
+
+    // Resets the search field on Video overview
+    $(document).on('click', '#reset_video_search', function(){
+        window.location = '/admin/videos';
+    });
 
 // Functions
+    //### Videos ###
+    // Clear searches
+    function clearElementValue(element){
+        document.getElementById(element).value = '';
+    }
+
+    // Draw stars in /videos/show and /videos/index
+    function drawStars(index, element){
+        // console.log('in drawStars')
+        for (let i=0; i < index; i++) {
+            // console.log($(element).siblings('.voting_stars').eq(i))
+            $(element).siblings('.voting_stars').eq(i).removeClass('text-secondary').addClass('text-warning');
+        }
+    }
+
+    // clears color of stars in /videos/show
+    function clearStarColor(element){
+        // console.log(element.siblings('.voting_stars'))
+        element.siblings('.voting_stars').removeClass('text-warning').addClass('text-secondary');
+    }
+
+    //### Ajax stuff ###
+    // Init Ajax with setting CSRF Token
+    function setCSRF(){
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    }
+
+    // Save the actual progress vote from video to the database
+    function saveToDB(videoId, ratedIndex){
+        setCSRF();
+        $.ajax({
+            url: "/admin/videos/rate-video",
+            method: "POST",
+            dataType: "text",
+            data: {
+                videoId: videoId,
+                ratedIndex: ratedIndex
+            }, success: function(r){
+                console.log(r)
+                $('#video_'+videoId).closest('.card').find('.rated_index').data('index', ratedIndex);
+            }, error: function (error){
+                console.log(error);
+            }
+        });
+    }
+
     // removes table related bootstrap classes if screen gets to small
     function tackleClasses(window){
         if($(window).width() <760){
@@ -75,36 +195,36 @@ $(document).ready(function(){
     }
 
     // analyse if the page was refreshed by a event as listed below
-      function navigationType() {
-
-        var result;
-        var p;
-
-        if (window.performance.navigation) {
-            result = window.performance.navigation;
-            if (result == 255) {
-                result = 4
-            } // 4 is my invention!
-        }
-
-        if (window.performance.getEntriesByType("navigation")) {
-            p = window.performance.getEntriesByType("navigation")[0].type;
-
-            if (p == 'navigate') {
-                result = 0
-            }
-            if (p == 'reload') {
-                result = 1
-            }
-            if (p == 'back_forward') {
-                result = 2
-            }
-            if (p == 'prerender') {
-                result = 3
-            } //3 is my invention!
-        }
-        return result;
-    }
+    //   function navigationType() {
+    //
+    //     var result;
+    //     var p;
+    //
+    //     if (window.performance.navigation) {
+    //         result = window.performance.navigation;
+    //         if (result == 255) {
+    //             result = 4
+    //         } // 4 is my invention!
+    //     }
+    //
+    //     if (window.performance.getEntriesByType("navigation")) {
+    //         p = window.performance.getEntriesByType("navigation")[0].type;
+    //
+    //         if (p == 'navigate') {
+    //             result = 0
+    //         }
+    //         if (p == 'reload') {
+    //             result = 1
+    //         }
+    //         if (p == 'back_forward') {
+    //             result = 2
+    //         }
+    //         if (p == 'prerender') {
+    //             result = 3
+    //         } //3 is my invention!
+    //     }
+    //     return result;
+    // }
 
     // checks if something was changed inside an input field
     function gotChanged(element){
@@ -113,6 +233,7 @@ $(document).ready(function(){
     }
 
     // get the current URL and check if there is a fragment for controlling the accordions
+    // redo that and use localStorage for saving the state of the accordion
     function controlAccordion(){
         let accordionTrigger = window.location.hash
 

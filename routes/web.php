@@ -20,9 +20,9 @@ Route::get('/about', 'PageController@about')->name('about');
 Route::middleware('auth')->group(function() {
     Route::namespace('Admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
-        Route::get('/videos/index/{category?}', 'VideoController@index')->name('videos.index');
-//        Route::get('/videos/create/{category?}', 'VideoController@create')->name('videos.create');
-        Route::resource('/videos', 'VideoController')->except('index');
+
+        Route::resource('/videos', 'VideoController');
+        Route::post('/videos/rate-video', 'VideoController@rate')->name('videos.rate');
 
         Route::resource('/categories', 'CategoryController')->except(['index', 'show', 'edit']);
         Route::resource('/users', 'UserController')->only(['update', 'destroy']);

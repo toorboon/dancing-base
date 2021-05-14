@@ -15,7 +15,7 @@ class CreateForeignKeysForVideosTable extends Migration
     {
         Schema::table('videos', function (Blueprint $table) {
             $table->foreign('category_id')->references('id')->on('categories');
-            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('create_user_id')->references('id')->on('users');
         });
     }
 
@@ -28,7 +28,7 @@ class CreateForeignKeysForVideosTable extends Migration
     {
         Schema::table('videos', function (Blueprint $table) {
             $table->dropForeign('videos_category_id_foreign');
-            $table->dropForeign('videos_user_id_foreign');
+            $table->dropForeign('videos_create_user_id_foreign');
         });
     }
 }

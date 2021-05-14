@@ -15,7 +15,7 @@
                                 <label for="title" class="col-md-4 col-form-label text-md-right">Title</label>
 
                                 <div class="col-md-6">
-                                    <input id="title" type="text" class="form-control" name="title" value="{{ old('title') ?? $video->title }}" required autocomplete="title" autofocus>
+                                    <input id="title" type="text" class="form-control" name="title" value="{{ old('title') ?? $video->title }}" required autofocus>
                                 </div>
                             </div>
 
@@ -23,7 +23,7 @@
                                 <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
 
                                 <div class="col-md-6">
-                                    <textarea id="description" class="form-control" name="description" autocomplete="description">{{ old('description') ?? $video->description }}</textarea>
+                                    <textarea id="description" class="form-control" name="description">{{ old('description') ?? $video->description }}</textarea>
                                 </div>
                             </div>
 
@@ -31,7 +31,14 @@
                                 <label for="tag" class="col-md-4 col-form-label text-md-right">Tag</label>
 
                                 <div class="col-md-6">
-                                    <input id="tag" type="text" class="form-control" name="tag" value="{{ old('tag') ?? $video->tag }}" autocomplete="tag">
+                                    <select multiple="multiple" id="tags" class="form-control select2" name="tags[]" title="Please choose/create/delete Tags">
+                                        @foreach($video->tags as $tag)
+                                            <option value="{{ $tag->normalized }}" selected>{{ $tag->name }}</option>
+                                        @endforeach
+                                        @foreach($tagsOption as $tag)
+                                            <option value="{{ $tag->normalized }}">{{ $tag->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
 

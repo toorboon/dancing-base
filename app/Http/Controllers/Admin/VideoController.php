@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Category;
 use App\Http\Controllers\Controller;
+use App\Rating;
 use App\Video;
 use Carbon\Carbon;
+use Cviebrock\EloquentTaggable\Models\Tag;
 use FFMpeg\Format\Video\WebM;
 use FFMpeg\Format\Video\X264;
 use Illuminate\Http\Request;
@@ -20,26 +22,52 @@ class VideoController extends Controller
      *
      * @param Request $request
      * @param null $oldCategory
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
      */
-    public function index(Request $request, $oldCategory = null)
+    public function index(Request $request)
     {
+        if (session('selectedCategory') && blank($request['category']) && blank($request['progress']) && blank($request['search'])){
+            $selectedCategory = session('selectedCategory');
 
-        // noch überarbeiten, je nachdem, wie das Video Model am Ende aussieht!
-        $videos = [];
+            return redirect()->route('admin.videos.index', ['category' => $selectedCategory]);
+        }
+
+        $selectedCategory = $request['category'];
+        session(['selectedCategory' => $selectedCategory]);
+        $selectedProgress = $request['progress'];
+        session(['selectedProgress' => $selectedProgress]);
+
         $categoryList = Category::all();
 
-        if($request->filled('category')) {
-            $videos = Video::where('category_id', $request['category'])->get();
-            $request->flash();
-        } else if ($oldCategory) {
-            $videos = Video::where('category_id', $oldCategory)->get();
+        // Get an instance of the videos relationship of the current authenticated user
+        // Eager load the videocreator relationship
+        $videoQuery = $request->user()->videos()->with('videocreator');
+
+        // If category search is required
+        if($request->filled('category') && $request['category'] !== 'all') {
+            $videoQuery = $videoQuery->where('category_id', $request['category']);
         }
+
+        // If progress search is required
+        if($request->filled('progress') && $request->input('progress') !== 'all'){
+            // Constrain the query : only get the videos with rated_index equal to $selectedProgress
+            $videoQuery = $videoQuery->wherePivot('rated_index', $selectedProgress);
+        }
+
+        // Full text search for fields mentioned in Video model
+        if ($request->filled('search')) {
+            $videoQuery = $videoQuery->search($request->get('search'));
+            $request->flash();
+        }
+
+        $videos = $videoQuery->latest()->get();
+//        $videos = $videos->paginate(1);
 
         return view('admin.videos.index')
             ->with('videos', $videos)
             ->with('categories', $categoryList)
-            ->with('oldCategory', $oldCategory)
+            ->with('selectedCategory', $selectedCategory)
+            ->with('selectedProgress', $selectedProgress)
             ;
     }
 
@@ -50,10 +78,11 @@ class VideoController extends Controller
      */
     public function create()
     {
-
+        $taglist = Tag::all();
         $categories = Category::all();
         return view('admin.videos.create')
             ->with('categories', $categories)
+            ->with('tags', $taglist)
             ;
     }
 
@@ -81,18 +110,25 @@ class VideoController extends Controller
             $timelapse = 'novideo.jpg';
         }
 
+
+
         // Create post
         $video = new Video();
         $video->title = $request['title'];
         $video->description = $request['description'];
-        $video->tag = $request['tag'];
+
+//        $video->tag = $request['tag'];
         $video->category_id = $request['category'];
         $video->video = $videoNameToStore;
         $video->timelapse = $timelapse;
-        $video->user_id = auth()->user()->id;
+        $video->create_user_id = auth()->user()->id;
         $video->save();
 
-        return redirect()->route('admin.videos.index', $video->category->id)->with('success', 'Video created');
+        // Handle tags
+        $video->tag($request['tags']);
+        $video->save();
+
+        return redirect()->route('admin.videos.index')->with('success', 'Video created');
     }
 
     /**
@@ -156,9 +192,21 @@ class VideoController extends Controller
      */
     public function show($id)
     {
+        $user = auth()->user();
+        $rated_index = null;
+
+        foreach ($user->videos as $video)
+        {
+            if ($video->id == $id){
+                $rated_index = $video->pivot->rated_index;
+            }
+        }
+
         $video = Video::findOrFail($id);
+
         return view('admin.videos.show')
-            ->with('video', $video);
+            ->with('video', $video)
+            ->with('rated_index', $rated_index);
     }
 
     /**
@@ -169,11 +217,14 @@ class VideoController extends Controller
      */
     public function edit($id)
     {
-        $categories = Category::all();
         $video = Video::findOrFail($id);
+        $tagsMerged = Tag::all()->diff($video->tags);
+        $categories = Category::all();
+
         return view('admin.videos.edit')
             ->with('video', $video)
-            ->with('categories', $categories);
+            ->with('categories', $categories)
+            ->with('tagsOption', $tagsMerged);
     }
 
     /**
@@ -194,7 +245,6 @@ class VideoController extends Controller
         // Update post
         $video->title = $request['title'];
         $video->description = $request['description'];
-        $video->tag = $request['tag'];
         $video->category_id = $request['category'];
         // Handle file upload
         if ($request->hasFile('video')) {
@@ -202,7 +252,9 @@ class VideoController extends Controller
             $video->video = $resultArray['videoNameToStore'];
             $video->timelapse = $resultArray['timelapse'];
         }
-        $video->user_id = auth()->user()->id;
+        $video->create_user_id = auth()->user()->id;
+        // Handle tags
+        $video->retag($request['tags']);
 
         $video->save();
 
@@ -224,5 +276,31 @@ class VideoController extends Controller
         $video->delete();
 
         return redirect()->route('admin.videos.index')->with('success', 'Video deleted');
+    }
+
+    /**
+     * Save the rating of a video to storage.
+     *
+     * @param Request $request
+     * @return string
+     */
+    public function rate(Request $request)
+    {
+//        dd($request);
+        $user = auth()->user();
+
+        foreach ($user->videos as $video)
+        {
+            if ($video->id == $request['videoId'] && $video->pivot->rated_index != $request['ratedIndex']){
+                $user->videos()->updateExistingPivot($video->id, ['rated_index' => $request['ratedIndex']]);
+                return 'Index reset! ';
+            }
+        }
+
+        $video = Video::findOrFail($request['videoId']);
+        $video->users()->attach($user, ['rated_index' => $request['ratedIndex']]);
+
+        return 'Created new ratedIndex! ';
+
     }
 }
