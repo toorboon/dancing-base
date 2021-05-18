@@ -38,9 +38,9 @@
                         </div>
                         <div class="input-group">
                             <div class="d-none d-md-inline input-group-prepend">
-                                <label class="input-group-text" for="rating">Search progress</label>
+                                <label class="input-group-text" for="progress_index">Search progress</label>
                             </div>
-                            <select id="progress" class="form-control custom-select flex-shrink-1 mb-2 mb-md-0" name="progress" required title="Please choose the video progress you are interested in!">
+                            <select id="progress_index" class="form-control custom-select flex-shrink-1 mb-2 mb-md-0" name="progress_index" required title="Please choose the video progress you are interested in!">
                                 <option value='all' @if(!($selectedProgress)) selected @endif>All</option>
                                 @for($i=0; $i<5; $i++)
                                     <option value="{{ $i+1 }}" {{ $selectedProgress == $i+1 ? 'selected' : '' }}>{{ $i+1 }} PStar</option>
@@ -98,9 +98,14 @@
                     <div class="card-body">
                         <small class="card-text">{{ $video->description }}</small>
                         <p class="card-text">
-                            <span id="rated_index_{{ $video->id }}" class="d-none rated_index" data-index="{{ $video->users->first()->pivot->rated_index ?? '' }}"></span>
+                            <span id="progress_index_{{ $video->id }}" class="d-none progress_index" data-index="
+{{--                            Das eventuell nutzen, um eine personalisierte Progressbar zu bauen --}}
+{{--                            @if(!$video->users->isEmpty()){{ $video->users->first()->pivot->progress_index}}@else''@endif--}}
+                                {{ $video->users->first()->pivot->progress_index ?? '' }}
+                                "></span>
                             @for($i=0; $i<5; $i++)
-                                <span class="voting_stars text-secondary" data-index="{{ $i+1 }}" title="This is the progress bar from {{ $video->users->first()->name }} for '{{ $video->title }}'">&#10022;</span>
+{{--                                {{dd($video)}}--}}
+                                <span class="voting_stars text-secondary" data-index="{{ $i+1 }}" title="This is your progress bar for this video">&#10022;</span>
                             @endfor
                         </p>
                     </div>

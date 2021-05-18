@@ -3,7 +3,7 @@
 div[data-href], tr[data-href]
     cursor: pointer
 
-// Necessary for making single video in show view resize nicely
+// Necessary for making single video in show view display nicely
 .actions
     position: absolute
     top: 10%
@@ -49,6 +49,7 @@ div[data-href], tr[data-href]
 body
     background-image: url('storage/img/wood1.png')
 
+// Change table view into card view and vice versa if screen gets to small -> better UI
 @media screen and (max-width: 768px)
     .table_card table
         border: 0

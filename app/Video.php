@@ -38,8 +38,8 @@ class Video extends Model
     }
 
     public function users(){
-        return $this->belongsToMany('App\User', 'ratings', 'video_id', 'user_id')
-            ->withPivot('rated_index')
+        return $this->belongsToMany('App\User', 'progress', 'video_id', 'user_id')
+            ->withPivot('progress_index')
             ->withTimestamps();
     }
 

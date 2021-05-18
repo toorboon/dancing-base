@@ -26,32 +26,39 @@ class VideoController extends Controller
      */
     public function index(Request $request)
     {
-        if (session('selectedCategory') && blank($request['category']) && blank($request['progress']) && blank($request['search'])){
+        if ((filled(session('selectedCategory')) || filled(session('selectedProgress'))) && (blank($request['category']) && blank($request['progress_index']) && blank($request['search']) && blank($request['resetSearch']))){
             $selectedCategory = session('selectedCategory');
+            $selectedProgress = session('selectedProgress');
 
-            return redirect()->route('admin.videos.index', ['category' => $selectedCategory]);
+            return redirect()->route('admin.videos.index', ['category' => $selectedCategory, 'progress_index' => $selectedProgress] );
         }
 
         $selectedCategory = $request['category'];
-        session(['selectedCategory' => $selectedCategory]);
-        $selectedProgress = $request['progress'];
-        session(['selectedProgress' => $selectedProgress]);
+        $selectedProgress = $request['progress_index'];
 
         $categoryList = Category::all();
 
         // Get an instance of the videos relationship of the current authenticated user
         // Eager load the videocreator relationship
-        $videoQuery = $request->user()->videos()->with('videocreator');
+//        $videoQuery = $request->user()->videos()->with('videocreator');
+        $videoQuery = Video::with(['users' => function ($query){
+            $query->where('users.id', '=', auth()->user()->id);
+            }])->with('videocreator');
 
         // If category search is required
         if($request->filled('category') && $request['category'] !== 'all') {
+            session(['selectedCategory' => $selectedCategory]);
             $videoQuery = $videoQuery->where('category_id', $request['category']);
         }
 
         // If progress search is required
-        if($request->filled('progress') && $request->input('progress') !== 'all'){
-            // Constrain the query : only get the videos with rated_index equal to $selectedProgress
-            $videoQuery = $videoQuery->wherePivot('rated_index', $selectedProgress);
+        if($request->filled('progress_index') && $request->input('progress_index') !== 'all'){
+            session(['selectedProgress' => $selectedProgress]);
+            // Constrain the query : only get the videos with progress_index equal to $selectedProgress
+//            $videoQuery = $videoQuery->wherePivot('progress_index', $selectedProgress);
+            $videoQuery = $videoQuery->whereHas('users', function($query) use ($selectedProgress) {
+                $query->where('progress_index', '=', $selectedProgress)->where('users.id', '=', auth()->user()->id);
+                });
         }
 
         // Full text search for fields mentioned in Video model
@@ -61,6 +68,7 @@ class VideoController extends Controller
         }
 
         $videos = $videoQuery->latest()->get();
+
 //        $videos = $videos->paginate(1);
 
         return view('admin.videos.index')
@@ -97,7 +105,7 @@ class VideoController extends Controller
         $this->validate($request, [
             'title' => 'required',
             'category' => 'required|integer',
-            'video' => 'mimes:mp4',
+            'video' => 'sometimes|mimes:mp4',
         ]);
 
         // Handle file upload
@@ -117,15 +125,16 @@ class VideoController extends Controller
         $video->title = $request['title'];
         $video->description = $request['description'];
 
-//        $video->tag = $request['tag'];
         $video->category_id = $request['category'];
         $video->video = $videoNameToStore;
         $video->timelapse = $timelapse;
         $video->create_user_id = auth()->user()->id;
+
         $video->save();
 
         // Handle tags
         $video->tag($request['tags']);
+        $video->users()->attach(auth()->user(), ['progress_index' => NULL]);
         $video->save();
 
         return redirect()->route('admin.videos.index')->with('success', 'Video created');
@@ -193,12 +202,12 @@ class VideoController extends Controller
     public function show($id)
     {
         $user = auth()->user();
-        $rated_index = null;
+        $progress_index = null;
 
         foreach ($user->videos as $video)
         {
             if ($video->id == $id){
-                $rated_index = $video->pivot->rated_index;
+                $progress_index = $video->pivot->progress_index;
             }
         }
 
@@ -206,7 +215,7 @@ class VideoController extends Controller
 
         return view('admin.videos.show')
             ->with('video', $video)
-            ->with('rated_index', $rated_index);
+            ->with('progress_index', $progress_index);
     }
 
     /**
@@ -286,21 +295,20 @@ class VideoController extends Controller
      */
     public function rate(Request $request)
     {
-//        dd($request);
         $user = auth()->user();
 
         foreach ($user->videos as $video)
         {
-            if ($video->id == $request['videoId'] && $video->pivot->rated_index != $request['ratedIndex']){
-                $user->videos()->updateExistingPivot($video->id, ['rated_index' => $request['ratedIndex']]);
-                return 'Index reset! ';
+            if ($video->id == $request['videoId'] && $video->pivot->progress_index != $request['progressIndex']){
+                $user->videos()->updateExistingPivot($video->id, ['progress_index' => $request['progressIndex']]);
+                return 'Progress_index updated! ';
             }
         }
 
         $video = Video::findOrFail($request['videoId']);
-        $video->users()->attach($user, ['rated_index' => $request['ratedIndex']]);
+        $video->users()->attach($user, ['progress_index' => $request['progressIndex']]);
 
-        return 'Created new ratedIndex! ';
+        return 'Created new progress_index! ';
 
     }
 }

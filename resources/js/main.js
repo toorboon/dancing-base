@@ -6,10 +6,10 @@ $(document).ready(function(){
     //### Videos ###
     $('.video').hover( hoverVideo, hideVideo );
 
-    if ($('.rated_index')){
-        $('.rated_index').each(function(i, obj) {
-            let ratedIndex = parseInt($(this).data('index'));
-            drawStars(ratedIndex, obj);
+    if ($('.progress_index')){
+        $('.progress_index').each(function(i, obj) {
+            let progressIndex = parseInt($(this).data('index'));
+            drawStars(progressIndex, obj);
         });
     }
 
@@ -52,35 +52,35 @@ $(document).ready(function(){
     // ### Videos ###
     //Draw stars for video rating
     $('.voting_stars').mouseover(function() {
-        let ratedIndexElement = $(this).siblings('.rated_index');
+        let progressIndexElement = $(this).siblings('.progress_index');
         //Fetch the index data attribute from the element you are hovering over
         let currentIndex = parseInt($(this).data('index'));
 
         // console.log(ratedIndexElement)
         // console.log(currentIndex)
-        clearStarColor(ratedIndexElement);
-        drawStars(currentIndex, ratedIndexElement);
+        clearStarColor(progressIndexElement);
+        drawStars(currentIndex, progressIndexElement);
     });
 
     $('.voting_stars').mouseleave(function() {
-        let ratedIndexElement = $(this).siblings('.rated_index');
-        //Fetch the index from the associated .rated_index element
-        let ratedIndex = parseInt(ratedIndexElement.data('index'));
+        let progressIndexElement = $(this).siblings('.progress_index');
+        //Fetch the index from the associated .progress_index element
+        let progressIndex = parseInt(progressIndexElement.data('index'));
 
-        clearStarColor(ratedIndexElement);
-        if (ratedIndex){
-            drawStars(ratedIndex, ratedIndexElement);
+        clearStarColor(progressIndexElement);
+        if (progressIndex){
+            drawStars(progressIndex, progressIndexElement);
         }
     });
 
-    //Save selected rating and get the videoId
+    //Save selected progress_index and get the videoId for saving it to db
     $('.voting_stars').on('click', function(e){
         e.stopPropagation();
-        let ratedIndex = parseInt($(this).data('index'));
+        let progressIndex = parseInt($(this).data('index'));
         let videoId = $(this).closest('.card').find('video').attr('id').replace(/[^0-9]/g,'');
-        console.log('ratedIndex: ' + ratedIndex)
-        console.log('video_id: ' + videoId)
-        saveToDB(videoId, ratedIndex);
+        // console.log('ratedIndex: ' + ratedIndex)
+        // console.log('video_id: ' + videoId)
+        saveToDB(videoId, progressIndex);
     });
 
     // event-handler for collapsing toolbox in video.index
@@ -113,7 +113,7 @@ $(document).ready(function(){
     });
 
     // this checks if in the /videos/index the select for choosing the progress was changed
-    $(document).on('change', '#progress', function(){
+    $(document).on('change', '#progress_index', function(){
         this.closest('form').submit();
     });
 
@@ -124,7 +124,7 @@ $(document).ready(function(){
 
     // Resets the search field on Video overview
     $(document).on('click', '#reset_video_search', function(){
-        window.location = '/admin/videos';
+        window.location = '/admin/videos?resetSearch=yes';
     });
 
 // Functions
@@ -160,7 +160,7 @@ $(document).ready(function(){
     }
 
     // Save the actual progress vote from video to the database
-    function saveToDB(videoId, ratedIndex){
+    function saveToDB(videoId, progressIndex){
         setCSRF();
         $.ajax({
             url: "/admin/videos/rate-video",
@@ -168,10 +168,10 @@ $(document).ready(function(){
             dataType: "text",
             data: {
                 videoId: videoId,
-                ratedIndex: ratedIndex
+                progressIndex: progressIndex
             }, success: function(r){
                 console.log(r)
-                $('#video_'+videoId).closest('.card').find('.rated_index').data('index', ratedIndex);
+                $('#video_'+videoId).closest('.card').find('.progress_index').data('index', progressIndex);
             }, error: function (error){
                 console.log(error);
             }

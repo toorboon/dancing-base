@@ -42,8 +42,8 @@ class User extends Authenticatable
     }
 
     public function videos(){
-        return $this->belongsToMany('App\Video', 'ratings', 'user_id', 'video_id')
-            ->withPivot('rated_index')
+        return $this->belongsToMany('App\Video', 'progress', 'user_id', 'video_id')
+            ->withPivot('progress_index')
             ->withTimestamps();;
     }
 }

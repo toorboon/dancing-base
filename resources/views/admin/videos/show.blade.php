@@ -42,7 +42,7 @@
                 <tr>
                     <th scope="row">Progress:</th>
                     <td class="font-weight-bold">
-                        <span id="rated_index_{{ $video->id }}" class="d-none rated_index" data-index="{{ $rated_index }}"></span>
+                        <span id="progress_index_{{ $video->id }}" class="d-none progress_index" data-index="{{ $progress_index }}"></span>
                         @for($i=0; $i<5; $i++)
                             <span class="voting_stars text-secondary" data-index="{{ $i+1 }}">&#10022;</span>
                         @endfor

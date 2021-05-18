@@ -27,6 +27,6 @@
     },
     "dependencies": {
         "@forevolve/bootstrap-dark": "^1.0.0-alpha.981",
-        "selectize": "^0.12.6"
+        "select2": "^4.1.0-rc.0"
     }
 }

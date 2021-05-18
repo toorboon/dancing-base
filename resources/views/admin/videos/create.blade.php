@@ -56,7 +56,7 @@
                                 <label for="video" class="col-md-4 col-form-label text-md-right">Upload video</label>
 
                                 <div class="col-md-6">
-                                    <input id="video" name="video" type="file" required>
+                                    <input id="video" name="video" type="file">
                                 </div>
                             </div>
 
