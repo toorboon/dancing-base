@@ -40,7 +40,6 @@ class VideoController extends Controller
 
         // Get an instance of the videos relationship of the current authenticated user
         // Eager load the videocreator relationship
-//        $videoQuery = $request->user()->videos()->with('videocreator');
         $videoQuery = Video::with(['users' => function ($query){
             $query->where('users.id', '=', auth()->user()->id);
             }])->with('videocreator');
@@ -55,7 +54,6 @@ class VideoController extends Controller
         if($request->filled('progress_index') && $request->input('progress_index') !== 'all'){
             session(['selectedProgress' => $selectedProgress]);
             // Constrain the query : only get the videos with progress_index equal to $selectedProgress
-//            $videoQuery = $videoQuery->wherePivot('progress_index', $selectedProgress);
             $videoQuery = $videoQuery->whereHas('users', function($query) use ($selectedProgress) {
                 $query->where('progress_index', '=', $selectedProgress)->where('users.id', '=', auth()->user()->id);
                 });
@@ -133,7 +131,9 @@ class VideoController extends Controller
         $video->save();
 
         // Handle tags
-        $video->tag($request['tags']);
+        if ($request['tags']) {
+            $video->tag($request['tags']);
+        }
         $video->users()->attach(auth()->user(), ['progress_index' => NULL]);
         $video->save();
 
@@ -263,8 +263,9 @@ class VideoController extends Controller
         }
         $video->create_user_id = auth()->user()->id;
         // Handle tags
-        $video->retag($request['tags']);
-
+        if ($request['tags']) {
+            $video->retag($request['tags']);
+        }
         $video->save();
 
         return redirect()->route('admin.videos.show', $video->id)->with('success', 'Video updated');
@@ -310,5 +311,19 @@ class VideoController extends Controller
 
         return 'Created new progress_index! ';
 
+    }
+
+    /**
+     * Clear the session via Ajax if reset_search button was hit
+     *
+     * @param Request $request
+     * @return string
+     */
+    public function resetSearch()
+    {
+        session()->forget('selectedCategory');
+        session()->forget('selectedProgress');
+
+        return 'SearchSession cleared';
     }
 }

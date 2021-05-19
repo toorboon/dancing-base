@@ -124,6 +124,7 @@ $(document).ready(function(){
 
     // Resets the search field on Video overview
     $(document).on('click', '#reset_video_search', function(){
+        resetSearch();
         window.location = '/admin/videos?resetSearch=yes';
     });
 
@@ -170,9 +171,23 @@ $(document).ready(function(){
                 videoId: videoId,
                 progressIndex: progressIndex
             }, success: function(r){
-                console.log(r)
+                console.log(r);
                 $('#video_'+videoId).closest('.card').find('.progress_index').data('index', progressIndex);
             }, error: function (error){
+                console.log(error);
+            }
+        });
+    }
+
+    // Clears the PHP session variable for storing the Search
+    function resetSearch(){
+        setCSRF();
+        $.ajax({
+            url: "/admin/videos/resetSearch",
+            method: "POST",
+            success: function(r) {
+                console.log(r);
+            }, error: function(error){
                 console.log(error);
             }
         });
