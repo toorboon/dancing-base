@@ -70,7 +70,7 @@
 
     @if(count($videos)>0)
         {{--Paginator goes here, but you have to solve the url issue with the redirect --}}
-{{--        <div class="d-flex justify-content-center mt-2">{{ $videos->links() }}</div>--}}
+        <div class="d-flex justify-content-center mt-2">{{ $videos->links() }}</div>
 
         <div class="row row-cols-1 row-cols-md-3 mt-3">
             @foreach($videos as $video)
@@ -90,13 +90,17 @@
                                 </form>
                             </div>
                         </div>
-                        <video id="video_{{ $video->id }}" muted class="card-img-top embed-responsive-item"><source src="/storage/videos/{{ $video->timelapse }}" type="video/webm" >
-                            Your browser does not support the video tag!
-                        </video>
+                        @if($video->timelapse)
+                            <video id="video_{{ $video->id }}" muted class="card-img-top embed-responsive-item"><source src="/storage/videos/{{ $video->timelapse }}" type="video/webm" >
+                                Your browser does not support the video tag!
+                            </video>
+                        @else
+                            <img class="card-img-top embed-responsive-item" src="{{ asset('images/novideo.jpg') }}">
+                        @endif
                     </div>
                     <h5 class="card-header">{{ $video->title }}</h5>
                     <div class="card-body">
-                        <small class="card-text">{{ $video->description }}</small>
+                        <small class="card-text">{!! $video->description !!}</small>
                         <p class="card-text">
                             <span id="progress_index_{{ $video->id }}" class="d-none progress_index" data-index="
 {{--                            Das eventuell nutzen, um eine personalisierte Progressbar zu bauen --}}

@@ -19,7 +19,9 @@ Route::get('/about', 'PageController@about')->name('about');
 
 Route::middleware('auth')->group(function() {
     Route::namespace('Admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
+
+        Route::resource('/dashboard', 'DashboardController')->only(['index','update','destroy'])
+            ->parameters(['dashboard' => 'tag',]);
 
         Route::resource('/videos', 'VideoController');
         Route::post('/videos/rate-video', 'VideoController@rate')->name('videos.rate');

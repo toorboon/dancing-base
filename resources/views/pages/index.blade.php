@@ -2,7 +2,7 @@
 
 @section('content')
 
-    <div id="jumbotron" class="jumbotron bg-secondary text-center">
+    <div id="jumbotron" class="jumbotron bg-dark text-center text-white">
         <h1>Welcome to the Dancing Base!</h1>
         <h6>This is the place where your dreams come true!</h6>
         @guest

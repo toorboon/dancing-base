@@ -5,8 +5,12 @@
  */
 
 require('./bootstrap');
-require('./main');
 require('select2');
+
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+window.ClassicEditor = ClassicEditor;
+
+require('./main');
 
 window.Vue = require('vue');
 

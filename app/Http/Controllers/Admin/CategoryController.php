@@ -8,8 +8,6 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    private $triggerAccordion = '#category';
-
     /**
      * Show the form for creating a new resource.
      *
@@ -26,13 +24,13 @@ class CategoryController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $category = new Category();
         $category->fill($request->all());
         $category->save();
 
-        return redirect('admin/dashboard'.$this->triggerAccordion)
+        return redirect('admin/dashboard')
             ->with('success', 'Category created');
     }
 
@@ -43,13 +41,14 @@ class CategoryController extends Controller
      * @param  \App\Category  $category
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, Category $category)
+    public function update(Request $request, Category $category): \Illuminate\Http\RedirectResponse
     {
+
         if (isset($request['category_title'])){
             $category->title = $request['category_title'];
             $category->save();
 
-            return redirect('admin/dashboard'.$this->triggerAccordion)
+            return redirect('admin/dashboard')
                 ->with('success', 'Category title changed')
                 ;
         }
@@ -58,12 +57,12 @@ class CategoryController extends Controller
             $category->description = $request['category_description'];
             $category->save();
 
-            return redirect('admin/dashboard'.$this->triggerAccordion)
+            return redirect('admin/dashboard')
                 ->with('success', 'Category description changed')
                 ;
         }
 
-        return redirect('admin/dashboard'.$this->triggerAccordion)
+        return redirect('admin/dashboard')
             ->with('error', 'Couldn\'t update anything on category')
             ;
     }
@@ -75,10 +74,10 @@ class CategoryController extends Controller
      * @return \Illuminate\Http\RedirectResponse
      * @throws \Exception
      */
-    public function destroy(Category $category)
+    public function destroy(Category $category): \Illuminate\Http\RedirectResponse
     {
         $category->delete();
-        return redirect('admin/dashboard'.$this->triggerAccordion)
+        return redirect('admin/dashboard')
             ->with('success', 'Category deleted');
     }
 }

@@ -23,14 +23,14 @@
                                 <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
 
                                 <div class="col-md-6">
-                                    <textarea class="form-control" name="description" value="{{ old('description') }}"></textarea>
+                                    <textarea id="description" class="form-control ckeditor" name="description" value="{{ old('description') }}"></textarea>
                                 </div>
                             </div>
 
                             <div class="form-group row mb-0">
                                 <div class="col-lg-6 offset-lg-4 offset-md-4">
                                     <button type="submit" class="btn btn-primary">{{ __('Create Category') }}</button>
-                                    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Back</a>
+                                    <a href="{{ route('admin.dashboard.index') }}" class="btn btn-secondary">Back</a>
                                 </div>
                             </div>
 

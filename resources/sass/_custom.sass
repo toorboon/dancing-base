@@ -1,4 +1,13 @@
 // Put your custom styling here
+// Change UI of ckeditor5
+\:root
+    --ck-color-base-foreground: grey
+    --ck-color-base-background: black
+    --ck-color-text: white
+    --ck-color-base-text: white
+    --ck-color-button-default-hover-background: black
+    --ck-color-button-default-active-background: black
+
 // Makes rows and cards in app nice looking, if you hover over them
 div[data-href], tr[data-href]
     cursor: pointer
@@ -39,15 +48,18 @@ div[data-href], tr[data-href]
     background-color: white !important
     color: black !important
 
-#jumbotron
-    background-image: url("storage/img/salsa.jpg")
+.input_change
+    background-color: black
+    color: white
 
-#buttons
-    // HIER NOCH NACHSEHEN, WIE VERZÖGERUNG EINGEBAUT WERDEN KANN VIA CSS
-    transform: translate(5000)
+#jumbotron
+    background-image: linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)), url("storage/img/dancer.png")
+    background-size: cover
+    background-position: center
+    background-repeat: no-repeat
 
 body
-    background-image: url('storage/img/wood1.png')
+    background-image: url('storage/img/wood9.png')
 
 // Change table view into card view and vice versa if screen gets to small -> better UI
 @media screen and (max-width: 768px)

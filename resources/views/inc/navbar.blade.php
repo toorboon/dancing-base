@@ -42,7 +42,7 @@
                                 @csrf
                             </form>
 
-                            <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Dashboard</a>
+                            <a class="dropdown-item" href="{{ route('admin.dashboard.index') }}">Dashboard</a>
                             @if (Route::has('register'))
                                 <a class="dropdown-item" href="{{ route('register') }}">Create User</a>
                             @endif

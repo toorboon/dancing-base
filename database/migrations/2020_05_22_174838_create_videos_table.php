@@ -19,7 +19,7 @@ class CreateVideosTable extends Migration
             $table->text('description')->nullable();
             $table->string('video')->nullable();
             $table->string('timelapse')->nullable();
-            $table->unsignedInteger('category_id');
+            $table->unsignedInteger('category_id')->nullable();
             $table->unsignedInteger('create_user_id');
             $table->timestamps();
         });

@@ -66,7 +66,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     {{ __('Create User') }}
                                 </button>
-                                <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Back</a>
+                                <a href="{{ route('admin.dashboard.index') }}" class="btn btn-secondary">Back</a>
                             </div>
                         </div>
                     </form>

@@ -1,7 +1,16 @@
 $(document).ready(function(){
 
 // Init
-    controlAccordion();
+    //### Dashboard ###
+    setAccordion();
+
+    $('.ckeditor').each(function(i, obj) {
+        ClassicEditor
+            .create(document.querySelector('#'+$(obj).attr('id')))
+            .catch(error => {
+                console.error( error );
+            });
+    });
 
     //### Videos ###
     $('.video').hover( hoverVideo, hideVideo );
@@ -42,12 +51,22 @@ $(document).ready(function(){
     });
 
     // this checks if in the /dashboard an input was changed
-    $(document).on('focusout', '.input_change', function(){
+    $(document).on('focusout', '.input_change', function(e){
         if (!gotChanged(this)) {
             return false;
         }
+        // console.log($(this).attr('id'))
+        // const editorData = editor.getData();
+        // console.log(editorData)
+        // changeDescription($(this).attr('id'), editorData);
+        // CKupdate();
         this.parentNode.submit();
     });
+
+    // Set localStorage variable if clicked on an accordion
+    $(document).on('click', '.card-header', function(){
+        window.localStorage.setItem('accordion_id', $(this).attr('id'));
+    })
 
     // ### Videos ###
     //Draw stars for video rating
@@ -56,8 +75,6 @@ $(document).ready(function(){
         //Fetch the index data attribute from the element you are hovering over
         let currentIndex = parseInt($(this).data('index'));
 
-        // console.log(ratedIndexElement)
-        // console.log(currentIndex)
         clearStarColor(progressIndexElement);
         drawStars(currentIndex, progressIndexElement);
     });
@@ -78,8 +95,7 @@ $(document).ready(function(){
         e.stopPropagation();
         let progressIndex = parseInt($(this).data('index'));
         let videoId = $(this).closest('.card').find('video').attr('id').replace(/[^0-9]/g,'');
-        // console.log('ratedIndex: ' + ratedIndex)
-        // console.log('video_id: ' + videoId)
+
         saveToDB(videoId, progressIndex);
     });
 
@@ -107,7 +123,7 @@ $(document).ready(function(){
         window.location = $(this).data('href');
     });
 
-    // this checks if in the /videos/index the select for choosing the category was changed
+    // this checks if in the /videos/index the select for searching the category was changed
     $(document).on('change', '#categoryindex', function(){
         this.closest('form').submit();
     });
@@ -129,6 +145,7 @@ $(document).ready(function(){
     });
 
 // Functions
+
     //### Videos ###
     // Clear searches
     function clearElementValue(element){
@@ -193,6 +210,23 @@ $(document).ready(function(){
         });
     }
 
+    // function changeDescription(element, descriptionData){
+    //     setCSRF();
+    //     $.ajax({
+    //         url: "/admin/categories/updateCat",
+    //         method: "POST",
+    //         dataType: "text",
+    //         data: {
+    //             descriptionData: descriptionData,
+    //             element: element
+    //         }, success: function(r) {
+    //             console.log(r);
+    //         }, error: function(error){
+    //             console.log(error);
+    //         }
+    //     });
+    // }
+
     // removes table related bootstrap classes if screen gets to small
     function tackleClasses(window){
         if($(window).width() <760){
@@ -247,24 +281,26 @@ $(document).ready(function(){
         return element.value !== initialValue;
     }
 
-    // get the current URL and check if there is a fragment for controlling the accordions
+    // Get the current accordion setting and set it for the dashboard
     // redo that and use localStorage for saving the state of the accordion
-    function controlAccordion(){
-        let accordionTrigger = window.location.hash
+    function setAccordion(){
+        let accordionTrigger = window.localStorage.getItem('accordion_id');
 
-        if (accordionTrigger) {
-            $(accordionTrigger).collapse('toggle');
-        } else {
-            $('#user').collapse('toggle');
+        if (accordionTrigger){
+            $('#' + accordionTrigger).siblings('.collapse').collapse('toggle');
         }
     }
 
     // make videos play when hovered over them
     function hoverVideo(e) {
-        $('video', this).get(0).play();
+        if ($('video').length) {
+            $('video', this).get(0).play();
+        }
     }
     function hideVideo(e) {
-        $('video', this).get(0).pause();
+        if ($('video').length) {
+            $('video', this).get(0).pause();
+        }
     }
 
 })//end of $(document).ready(function(){});

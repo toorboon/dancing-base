@@ -23,7 +23,7 @@
                                 <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
 
                                 <div class="col-md-6">
-                                    <textarea id="description" class="form-control" name="description"></textarea>
+                                    <textarea id="description" class="form-control ckeditor" name="description"></textarea>
                                 </div>
                             </div>
 

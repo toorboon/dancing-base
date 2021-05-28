@@ -3,7 +3,15 @@
 @section('content')
     <div class="row">
         <div class="bg-dark pt-2 col-12">
-            <p>This page contains videos uploaded by these persons: ADMINS.</p>
+            <p>This page contains videos uploaded by these users:
+                @if(count($creators)>0)
+                    <ul>
+                        @foreach($creators as $creator)
+                                <li>{{ $creator }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            </p>
             <p>The aforementioned administrators make sure that he or she has all rights
                 regarding the videos which got uploaded.</p>
             <p>If this is not the case, please inform the Administrator of this page

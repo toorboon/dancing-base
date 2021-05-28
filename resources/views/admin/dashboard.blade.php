@@ -47,13 +47,17 @@
                                                         <input type="text" class="input_change" name="category_title" value="{{ $category->title }}" required>
                                                     </form>
                                                 </td>
+
                                                 <td data-label="Description">
                                                     <form action="{{ route('admin.categories.update', $category) }}" method="POST">
                                                         @csrf
                                                         @method('PUT')
-                                                        <textarea class="input_change w-100" name="category_description">{{ $category->description }}</textarea>
+                                                        <div class="input_change">
+                                                            <textarea id="categoryDesc{{ $category->id }}" class="w-100 ckeditor" name="category_description">{{ $category->description }}</textarea>
+                                                        </div>
                                                     </form>
                                                 </td>
+
                                                 <td class="d-flex">
                                                     <form action="{{ route('admin.categories.destroy', $category) }}" method="POST">
                                                         @csrf
@@ -75,10 +79,57 @@
                     </div>
 
                     <div class="card">
+                        <div class="card-header" id="taglistAccordion" data-toggle="collapse" data-target="#taglist">
+                            <h5>Tags</h5>
+                        </div>
+
+                        <div id="taglist" class="collapse" aria-labelledby="taglistAccordion" data-parent="#dashboardAccordion">
+                            <div class="card-body">
+                                <table class="table table-sm  table_card">
+                                    <thead class="table-info">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Created</th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @if (count($tags) > 0)
+                                        @foreach($tags as $tag)
+                                            <tr>
+                                                <td data-label="Name">
+                                                    <form action="{{ route('admin.dashboard.update', $tag) }}" method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <input id="renameTags" type="text" class="input_change" name="tag_name" value="{{ $tag->name }}" required>
+                                                    </form>
+                                                </td>
+                                                <td class="align-middle" data-label="created_date">{{ $tag->created_at }}</td>
+                                                <td class="">
+                                                    <form action="{{ action('Admin\DashboardController@destroy', $tag) }}" method="POST">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button id="deleteTags" type="submit" class="btn btn-sm btn-danger" value="delete">Delete</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td colspan="6" class="text-center">No Tags found!</td>
+                                        </tr>
+                                    @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
                         <div class="card-header" id="userAccordion" data-toggle="collapse" data-target="#user">
                             <h5>Users</h5>
                         </div>
-                        <div id="user" class="collapse" aria-labelledby="userAccordion" data-parent="#dashboardAccordion">
+                        <div id="user" class="collapse accordion_marker" aria-labelledby="userAccordion" data-parent="#dashboardAccordion">
                             <div class="card-body">
                                 <table class="table table-sm  table_card">
                                     <thead class="table-info">

@@ -11,6 +11,9 @@ use Cviebrock\EloquentTaggable\Models\Tag;
 use FFMpeg\Format\Video\WebM;
 use FFMpeg\Format\Video\X264;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 
@@ -27,10 +30,17 @@ class VideoController extends Controller
     public function index(Request $request)
     {
         if ((filled(session('selectedCategory')) || filled(session('selectedProgress'))) && (blank($request['category']) && blank($request['progress_index']) && blank($request['search']) && blank($request['resetSearch']))){
-            $selectedCategory = session('selectedCategory');
-            $selectedProgress = session('selectedProgress');
 
-            return redirect()->route('admin.videos.index', ['category' => $selectedCategory, 'progress_index' => $selectedProgress] );
+            $url = [
+                'category' => session('selectedCategory'),
+                'progress_index' => session('selectedProgress'),
+            ];
+
+            if ($request->page) {
+                $url ['page'] = $request->page;
+            }
+
+            return redirect()->route('admin.videos.index', $url);
         }
 
         $selectedCategory = $request['category'];
@@ -45,18 +55,23 @@ class VideoController extends Controller
             }])->with('videocreator');
 
         // If category search is required
-        if($request->filled('category') && $request['category'] !== 'all') {
+        if($request->filled('category')) {
+            // Reset session in every request case where this key is set
             session(['selectedCategory' => $selectedCategory]);
-            $videoQuery = $videoQuery->where('category_id', $request['category']);
+            if($request->input('category') !== 'all') {
+                $videoQuery = $videoQuery->where('category_id', $request['category']);
+            }
         }
 
         // If progress search is required
-        if($request->filled('progress_index') && $request->input('progress_index') !== 'all'){
+        if($request->filled('progress_index')){
             session(['selectedProgress' => $selectedProgress]);
-            // Constrain the query : only get the videos with progress_index equal to $selectedProgress
-            $videoQuery = $videoQuery->whereHas('users', function($query) use ($selectedProgress) {
-                $query->where('progress_index', '=', $selectedProgress)->where('users.id', '=', auth()->user()->id);
+            if($request->input('progress_index') !== 'all') {
+                // Constrain the query : only get the videos with progress_index equal to $selectedProgress
+                $videoQuery = $videoQuery->whereHas('users', function ($query) use ($selectedProgress) {
+                    $query->where('progress_index', '=', $selectedProgress)->where('users.id', '=', auth()->user()->id);
                 });
+            }
         }
 
         // Full text search for fields mentioned in Video model
@@ -66,8 +81,7 @@ class VideoController extends Controller
         }
 
         $videos = $videoQuery->latest()->get();
-
-//        $videos = $videos->paginate(1);
+        $videos = $this->paginate($videos, 6, null, ['path'=>url('admin/videos')]);
 
         return view('admin.videos.index')
             ->with('videos', $videos)
@@ -75,6 +89,19 @@ class VideoController extends Controller
             ->with('selectedCategory', $selectedCategory)
             ->with('selectedProgress', $selectedProgress)
             ;
+    }
+
+    /**
+     * Create a paginator after your liking.
+     *
+     * @return LengthAwarePaginator
+     */
+    protected function paginate($items, $perPage = 6, $page = null, $options = [])
+    {
+        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
+        $items = $items instanceof Collection ? $items : Collection::make($items);
+
+        return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     }
 
     /**
@@ -102,7 +129,7 @@ class VideoController extends Controller
     {
         $this->validate($request, [
             'title' => 'required',
-            'category' => 'required|integer',
+            'category' => 'integer',
             'video' => 'sometimes|mimes:mp4',
         ]);
 
@@ -111,10 +138,11 @@ class VideoController extends Controller
             $resultArray = $this->handleVideo($request->file('video'));
             $videoNameToStore = $resultArray['videoNameToStore'];
             $timelapse = $resultArray['timelapse'];
-        } else {
-            $videoNameToStore = 'novideo.jpg';
-            $timelapse = 'novideo.jpg';
         }
+//        else {
+//            $videoNameToStore = 'novideo.jpg';
+//            $timelapse = 'novideo.jpg';
+//        }
 
 
 
@@ -124,8 +152,10 @@ class VideoController extends Controller
         $video->description = $request['description'];
 
         $video->category_id = $request['category'];
-        $video->video = $videoNameToStore;
-        $video->timelapse = $timelapse;
+        if ($request->hasFile('video')) {
+            $video->video = $videoNameToStore;
+            $video->timelapse = $timelapse;
+        }
         $video->create_user_id = auth()->user()->id;
 
         $video->save();
@@ -247,7 +277,7 @@ class VideoController extends Controller
     {
         $this->validate($request, [
             'title' => 'required',
-            'category' => 'required|integer',
+            'category' => 'integer',
             'video' => 'sometimes|mimes:mp4',
         ]);
 
@@ -265,6 +295,8 @@ class VideoController extends Controller
         // Handle tags
         if ($request['tags']) {
             $video->retag($request['tags']);
+        } else {
+            $video->detag();
         }
         $video->save();
 

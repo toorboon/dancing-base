@@ -3,9 +3,13 @@
 @section('content')
     <div class="card bg-transparent border-0">
         <div class="embed-responsive embed-responsive-16by9">
-            <video id="video_{{ $video->id }}" class="embed-responsive-item" controls muted autoplay><source src="/storage/videos/{{ $video->video }}" type="video/mp4">
-                Your browser does not support the video tag!
-            </video>
+            @if($video->video)
+                <video id="video_{{ $video->id }}" class="embed-responsive-item" controls muted autoplay><source src="/storage/videos/{{ $video->video }}" type="video/mp4">
+                    Your browser does not support the video tag!
+                </video>
+            @else
+                <img class="embed-responsive-item" src="{{ asset('images/novideo.jpg') }}">
+            @endif
         </div>
         <div id="" class="actions d-flex flex-column justify-content-between">
             <button type="button" class="btn btn-sm btn-dark text-right">...</button>
@@ -29,7 +33,7 @@
                 </tr>
                 <tr>
                     <th scope="row">Desc:</th>
-                    <td id="description_box">{{ $video->description }}</td>
+                    <td id="description_box">{!! $video->description !!}</td>
                 </tr>
                 <tr>
                     <th scope="row">Tags:</th>
@@ -37,7 +41,7 @@
                 </tr>
                 <tr>
                     <th scope="row">Cat:</th>
-                    <td>{{ $video->category->title }}</td>
+                    <td>{{ $video->category->title ?? '' }}</td>
                 </tr>
                 <tr>
                     <th scope="row">Progress:</th>
