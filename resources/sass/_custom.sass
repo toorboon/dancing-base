@@ -8,7 +8,7 @@
     --ck-color-button-default-hover-background: black
     --ck-color-button-default-active-background: black
 
-// Makes rows and cards in app nice looking, if you hover over them
+// Makes rows and cards in app nice looking, if you hoover over them
 div[data-href], tr[data-href]
     cursor: pointer
 
@@ -32,9 +32,7 @@ div[data-href], tr[data-href]
     font-size: x-large
     cursor: pointer
 
-//.select2-search select, .select2-search, .select2-results
-//    background-color: black !important
-
+// Change outlook of select2 (used for tags)
 .select2-container--default .select2-selection--multiple
     background-color: black !important
 
@@ -60,6 +58,9 @@ div[data-href], tr[data-href]
 
 body
     background-image: url('storage/img/wood9.png')
+
+th
+    width: 50px
 
 // Change table view into card view and vice versa if screen gets to small -> better UI
 @media screen and (max-width: 768px)

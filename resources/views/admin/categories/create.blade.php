@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-8">
+            <div class="col">
                 <div class="card">
                     <div class="card-header">{{__('Create Category')}}</div>
 
@@ -12,17 +12,17 @@
                             @csrf
 
                             <div class="form-group row">
-                                <label for="title" class="col-md-4 col-form-label text-md-right">Title</label>
+                                <label for="title" class="col-md-2 col-form-label text-md-right">Title</label>
 
-                                <div class="col-md-6">
+                                <div class="col-md-10">
                                     <input id="title" type="text" class="form-control" name="title" value="{{ old('title') ?? 'Salsa' }}" required autocomplete="title" autofocus>
                                 </div>
                             </div>
 
                             <div class="form-group row">
-                                <label for="description" class="col-md-4 col-form-label text-md-right">Description</label>
+                                <label for="description" class="col-md-2 col-form-label text-md-right">Description</label>
 
-                                <div class="col-md-6">
+                                <div class="col-md-10">
                                     <textarea id="description" class="form-control ckeditor" name="description" value="{{ old('description') }}"></textarea>
                                 </div>
                             </div>

@@ -16,7 +16,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'password', 'role_id'
     ];
 
     /**
@@ -45,5 +45,9 @@ class User extends Authenticatable
         return $this->belongsToMany('App\Video', 'progress', 'user_id', 'video_id')
             ->withPivot('progress_index')
             ->withTimestamps();;
+    }
+
+    public function role(){
+        return $this->belongsTo('App\Role');
     }
 }

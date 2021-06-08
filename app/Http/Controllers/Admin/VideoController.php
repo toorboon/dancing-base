@@ -139,12 +139,6 @@ class VideoController extends Controller
             $videoNameToStore = $resultArray['videoNameToStore'];
             $timelapse = $resultArray['timelapse'];
         }
-//        else {
-//            $videoNameToStore = 'novideo.jpg';
-//            $timelapse = 'novideo.jpg';
-//        }
-
-
 
         // Create post
         $video = new Video();
@@ -285,13 +279,19 @@ class VideoController extends Controller
         $video->title = $request['title'];
         $video->description = $request['description'];
         $video->category_id = $request['category'];
+
         // Handle file upload
         if ($request->hasFile('video')) {
+            // First delete the video files stored before
+            Storage::delete('public/videos/'.$video->video);
+            Storage::delete('public/videos/'.$video->timelapse);
+            // Then handle the new ones
             $resultArray = $this->handleVideo($request->file('video'));
             $video->video = $resultArray['videoNameToStore'];
             $video->timelapse = $resultArray['timelapse'];
         }
         $video->create_user_id = auth()->user()->id;
+
         // Handle tags
         if ($request['tags']) {
             $video->retag($request['tags']);

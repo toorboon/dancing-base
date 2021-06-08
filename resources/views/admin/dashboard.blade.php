@@ -28,7 +28,7 @@
 
                         <div id="category" class="collapse" aria-labelledby="categoryAccordion" data-parent="#dashboardAccordion">
                             <div class="card-body">
-                                <table class="table table-sm  table_card">
+                                <table class="table  table-sm table-responsive table_card w-auto">
                                     <thead class="table-info">
                                     <tr>
                                         <th>Title</th>
@@ -36,7 +36,7 @@
                                         <th></th>
                                     </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="">
                                     @if (count($categories) > 0)
                                         @foreach($categories as $category)
                                             <tr>
