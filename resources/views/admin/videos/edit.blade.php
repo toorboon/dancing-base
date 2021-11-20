@@ -20,6 +20,14 @@
                             </div>
 
                             <div class="form-group row">
+                                <label for="tts" class="col-md-2 col-form-label text-md-right" title="Check this, if you want Google to create a training .mp3 from your title field!">TTS?</label>
+
+                                <div class="col ">
+                                    <input id="tts" type="checkbox" class="my-auto h-100" name="tts" >
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
                                 <label for="description" class="col-md-2 col-form-label text-md-right">Description</label>
 
                                 <div class="col-md-10">
@@ -59,16 +67,13 @@
                                 </div>
                             </div>
 
-                            <div class="form-group row">
+                            <div class="form-group row ">
                                 <label for="video" class="col-md-2 col-form-label text-md-right">Upload video</label>
 
-                                <div class="col-md-10">
+                                <div class="col">
                                     <input id="video" name="video" type="file">
                                 </div>
-                            </div>
-
-                            <div class="form-group row mb-0">
-                                <div class="col-md-6 offset-md-4">
+                                <div class="mx-auto mt-2 mr-md-3">
                                     <button type="submit" class="btn btn-primary">
                                         {{ __('Edit Video') }}
                                     </button>
@@ -77,6 +82,17 @@
                             </div>
 
                         </form>
+
+                    </div>
+                    {{--Video preview--}}
+                    <div class="embed-responsive embed-responsive-16by9">
+                        @if($video->video)
+                            <video id="video_{{ $video->id }}" class="embed-responsive-item" controls muted autoplay><source src="/storage/videos/{{ $video->video }}" type="video/mp4">
+                                Your browser does not support the video tag!
+                            </video>
+                        @else
+                            <img class="embed-responsive-item" src="{{ asset('images/novideo.jpg') }}">
+                        @endif
                     </div>
                 </div>
             </div>

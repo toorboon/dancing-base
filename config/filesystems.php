@@ -53,6 +53,11 @@ return [
             'root' => storage_path('app/public/videos'),
         ],
 
+        'sounds' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/sounds'),
+        ],
+
         'temp' => [
             'driver' => 'local',
             'root' => storage_path('app/public/temp'),

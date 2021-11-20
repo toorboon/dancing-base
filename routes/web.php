@@ -26,9 +26,11 @@ Route::middleware('auth')->group(function() {
         Route::resource('/videos', 'VideoController');
         Route::post('/videos/rate-video', 'VideoController@rate')->name('videos.rate');
         Route::post('/videos/resetSearch', 'VideoController@resetSearch')->name('reset.search');
+        Route::post('/videos/playSound', 'VideoController@playSound')->name('videos.playSound');
 
         Route::resource('/categories', 'CategoryController')->except(['index', 'show', 'edit']);
         Route::resource('/users', 'UserController')->only(['update', 'destroy']);
+
 
     });
     Route::get('change-password', 'ChangePasswordController@index');

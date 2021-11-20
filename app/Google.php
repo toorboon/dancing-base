@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Rating extends Model
+class Google extends Model
 {
     /**
      * The attributes that are mass assignable.
@@ -12,7 +12,7 @@ class Rating extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'video_id', 'rated_index'
+        'characters'
     ];
 
     /**

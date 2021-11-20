@@ -3,19 +3,28 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Category;
+use App\Google;
 use App\Http\Controllers\Controller;
-use App\Rating;
 use App\Video;
 use Carbon\Carbon;
 use Cviebrock\EloquentTaggable\Models\Tag;
 use FFMpeg\Format\Video\WebM;
 use FFMpeg\Format\Video\X264;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use JetBrains\PhpStorm\ArrayShape;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
+use Google\Cloud\TextToSpeech\V1\AudioConfig;
+use Google\Cloud\TextToSpeech\V1\AudioEncoding;
+use Google\Cloud\TextToSpeech\V1\SynthesisInput;
+use Google\Cloud\TextToSpeech\V1\TextToSpeechClient;
+use Google\Cloud\TextToSpeech\V1\VoiceSelectionParams;
+use Illuminate\Support\Facades\Session;
 
 
 class VideoController extends Controller
@@ -25,7 +34,7 @@ class VideoController extends Controller
      *
      * @param Request $request
      * @param null $oldCategory
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     * @return Application|\Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
      */
     public function index(Request $request)
     {
@@ -40,7 +49,9 @@ class VideoController extends Controller
                 $url ['page'] = $request->page;
             }
 
-            return redirect()->route('admin.videos.index', $url);
+            return redirect()->route('admin.videos.index', $url)
+                ->with('success', Session::get('success'))
+                ->with('error', Session::get('error'));
         }
 
         $selectedCategory = $request['category'];
@@ -80,7 +91,7 @@ class VideoController extends Controller
             $request->flash();
         }
 
-        $videos = $videoQuery->latest()->get();
+        $videos = $videoQuery->groupBy('videos.id')->latest()->get();
         $videos = $this->paginate($videos, 6, null, ['path'=>url('admin/videos')]);
 
         return view('admin.videos.index')
@@ -107,7 +118,7 @@ class VideoController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function create()
     {
@@ -133,23 +144,32 @@ class VideoController extends Controller
             'video' => 'sometimes|mimes:mp4',
         ]);
 
-        // Handle file upload
-        if ($request->hasFile('video')){
-            $resultArray = $this->handleVideo($request->file('video'));
-            $videoNameToStore = $resultArray['videoNameToStore'];
-            $timelapse = $resultArray['timelapse'];
-        }
-
         // Create post
         $video = new Video();
         $video->title = $request['title'];
         $video->description = $request['description'];
-
         $video->category_id = $request['category'];
-        if ($request->hasFile('video')) {
-            $video->video = $videoNameToStore;
-            $video->timelapse = $timelapse;
+
+        // If tts is set get the .mp3 from Google and store it on disk
+        if ($request['tts']) {
+            // Call tts() and send the data to Google and get an .mp3 back
+            $TTSfileName = $this->tts($request['title']);
+            $countCharacters = mb_strlen($request['title']);
+            // Save the number of characters you used on the Google API for this run
+            $googleBill = new Google();
+            $googleBill->characters = $countCharacters;
+            $googleBill->save();
+            $video->sound = $TTSfileName;
         }
+
+        // Handle file upload
+        if ($request->hasFile('video')){
+            $resultArray = $this->handleVideo($request->file('video'));
+            $video->video = $resultArray['videoNameToStore'];
+            $video->timelapse = $resultArray['timelapse'];
+            $video->duration = $resultArray['duration'];
+        }
+
         $video->create_user_id = auth()->user()->id;
 
         $video->save();
@@ -214,6 +234,7 @@ class VideoController extends Controller
         return array(
             'timelapse' => $shortVideoNameToStore,
             'videoNameToStore' => $videoNameToStore,
+            'duration' => $durationInSeconds,
         );
     }
 
@@ -221,7 +242,7 @@ class VideoController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function show($id)
     {
@@ -246,7 +267,7 @@ class VideoController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function edit($id)
     {
@@ -280,6 +301,18 @@ class VideoController extends Controller
         $video->description = $request['description'];
         $video->category_id = $request['category'];
 
+        // If tts is set get the .mp3 from Google and store it on disk
+        if ($request['tts']) {
+            // Call tts() and send the data to Google and get an .mp3 back
+            $TTSfileName = $this->tts($request['title']);
+            $countCharacters = mb_strlen($request['title']);
+            // Save the number of characters you used on the Google API for this run
+            $googleBill = new Google();
+            $googleBill->characters = $countCharacters;
+            $googleBill->save();
+            $video->sound = $TTSfileName;
+        }
+
         // Handle file upload
         if ($request->hasFile('video')) {
             // First delete the video files stored before
@@ -304,6 +337,53 @@ class VideoController extends Controller
     }
 
     /**
+     * Contact Google Cloud TextToSpeech API.
+     *
+     * @return string
+     * @throws \Google\ApiCore\ApiException
+     */
+    public function tts($word)
+    {
+        // Check if this month TTS is still possible
+        $maxCharacters = 950000;
+        $actualYear = date('Y');
+        $actualMonth = date('m');
+        $googleBillsum = Google::where(DB::raw("YEAR(googles.created_at)"),$actualYear)
+            ->where(DB::raw("MONTH(googles.created_at)"),$actualMonth)
+            ->sum('characters');
+
+        if ($googleBillsum > $maxCharacters) {
+            return back()->with('error', 'TTS not possible in this month! You reached the treshold of '.$maxCharacters.'! Wait one month with more TTS adventures!');
+        }
+
+        try{
+            $textToSpeechClient = new TextToSpeechClient();
+
+            $input = new SynthesisInput();
+            $input->setText($word);
+            $voice = new VoiceSelectionParams();
+            $voice->setLanguageCode('es-ES');
+
+            // optional language setting
+            $voice->setName('es-ES-Standard-C');
+
+            $audioConfig = new AudioConfig();
+            $audioConfig->setAudioEncoding(AudioEncoding::MP3);
+
+            $resp = $textToSpeechClient->synthesizeSpeech($input, $voice, $audioConfig);
+            $soundFileName = str_replace(' ', '_',$word.'.mp3');
+            $path = Storage::put('public/sounds/'.$soundFileName, $resp->getAudioContent());
+
+            $textToSpeechClient->close();
+
+            return $soundFileName;
+
+        } catch(Exception $e) {
+            #return back()->with('error', 'This error occured while trying TTS your video title'.$e->getMessage());
+        }
+    }
+
+    /**
      * Remove the specified resource from storage.
      *
      * @param Video $video
@@ -318,6 +398,7 @@ class VideoController extends Controller
         $video->delete();
 
         return redirect()->route('admin.videos.index')->with('success', 'Video deleted');
+
     }
 
     /**
@@ -348,7 +429,6 @@ class VideoController extends Controller
     /**
      * Clear the session via Ajax if reset_search button was hit
      *
-     * @param Request $request
      * @return string
      */
     public function resetSearch()
@@ -357,5 +437,28 @@ class VideoController extends Controller
         session()->forget('selectedProgress');
 
         return 'SearchSession cleared';
+    }
+
+    /**
+     * Hand the client one mp3 file together with the duration of the connected video
+     *
+     * @return array
+     */
+    public function playSound(Request $request)
+    {
+        if ($request['mode'] == 'target') {
+            $returnedVideo = Video::findorfail($request['videoId']);
+        } else {
+            $returnedVideo = Video::inRandomOrder()->first();
+        }
+            $filePath = $returnedVideo->sound;
+            $duration = $returnedVideo->duration;
+            $title = $returnedVideo->title;
+
+            return array(
+                'filePath' => $filePath,
+                'duration' => $duration,
+                'title' => $title,
+            );
     }
 }

@@ -12,7 +12,7 @@
             @endif
         </div>
         <div id="" class="actions d-flex flex-column justify-content-between">
-            <button type="button" class="btn btn-sm btn-dark text-right">...</button>
+            <button type="button" class="btn btn-sm btn-dark text-right"><strong>...</strong></button>
             <div id="" class="buttons d-none flex-column align-items-stretch">
                 <a href="{{ route('admin.videos.index') }}" class="btn btn-sm btn-secondary mt-1">Back</a>
 
@@ -28,7 +28,7 @@
         <table id="information_box" class="table table-sm table-dark table-bordered">
             <tbody>
                 <tr>
-                    <th scope="row">Title:</th>
+                    <th scope="row">Title: @if($video->sound)<small class="float-right">&#128362;</small>@endif</th>
                     <td>{{ $video->title }}</td>
                 </tr>
                 <tr>

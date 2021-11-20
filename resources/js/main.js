@@ -27,6 +27,11 @@ $(document).ready(function(){
         tokenSeparators: [",", " "],
     });
 
+    let cycle = 0;
+    let expectedCycle = 0;
+    let timeout = 0;
+    let waitingTime = 0;
+
     // if localStorage toolboxOpen is set you want to display the toolbox open. Only the user can
     // close the toolbox, once it was opened
     if (localStorage.getItem('toolboxOpen')){
@@ -55,11 +60,6 @@ $(document).ready(function(){
         if (!gotChanged(this)) {
             return false;
         }
-        // console.log($(this).attr('id'))
-        // const editorData = editor.getData();
-        // console.log(editorData)
-        // changeDescription($(this).attr('id'), editorData);
-        // CKupdate();
         this.parentNode.submit();
     });
 
@@ -144,9 +144,87 @@ $(document).ready(function(){
         window.location = '/admin/videos?resetSearch=yes';
     });
 
+    //Show trainer box
+    $(document).on('click', '#showTrainer', function(){
+        $('#trainerbox').collapse('toggle');
+    });
+
+    // Sets the event handler for the trainer function in Actions on /videos
+    $(document).on('click', '#startTrainer', function(){
+        expectedCycle = document.getElementById('expectedCycle').value;
+        cycle = 1;
+        playSound('training', 0);
+    });
+
+    // Event handler for stopping the trainer
+    $(document).on('click', '#stopTrainer', function(){
+       clearTimeout(timeout);
+       document.getElementById('trainerinfo').innerHTML = 'Training interrupted!';
+    });
+
+    // Event handler for soundbox
+    $(document).on('click', '.soundbox', function(e){
+        e.stopPropagation();
+        let str = e.target.id;
+        playSound('target', str.replace(/\D/g, ""));
+    })
+
 // Functions
 
     //### Videos ###
+    // Call the database and fetch one audio file for playing it
+    function playSound(mode, videoId){
+        setCSRF();
+        $.ajax({
+            url: "/admin/videos/playSound",
+            method: "POST",
+            dataType: "text",
+            data: {
+                mode: mode,
+                videoId: videoId,
+            },
+            success: function(r) {
+                let json = JSON.parse(r);
+                if (mode === 'training') {
+                    trainer(json, mode);
+                }
+                if (mode === 'target') {
+                    soundCheck(json);
+                }
+            }, error: function(error){
+                console.log(error);
+            }
+        });
+    }
+
+    function trainer(json, mode){
+        if (cycle <= expectedCycle){
+            // Play audio x times
+            const audio = new Audio('/storage/sounds/' + json['filePath']);
+            if (cycle === 1){
+                document.getElementById('trainerinfo').innerHTML = 'Cantante habla: ' + json['title'];
+                const run = audio.play();
+                waitingTime = json['duration'];
+            } else {
+                timeout = setTimeout(function () {
+                    document.getElementById('trainerinfo').innerHTML = 'Cantante habla: ' + json['title'];
+                    const run = audio.play();
+                    waitingTime = json['duration'];
+                }, waitingTime * 1000);
+            }
+            cycle++;
+            audio.addEventListener('ended',function(){playSound(mode)});
+        } else {
+            document.getElementById('trainerinfo').innerHTML = 'End of training reached!';
+        }
+    }
+
+    // function to play just one sound
+    function soundCheck(json) {
+        const audio = new Audio('/storage/sounds/' + json['filePath']);
+        const run = audio.play();
+    }
+
     // Clear searches
     function clearElementValue(element){
         document.getElementById(element).value = '';
@@ -163,7 +241,6 @@ $(document).ready(function(){
 
     // clears color of stars in /videos/show
     function clearStarColor(element){
-        // console.log(element.siblings('.voting_stars'))
         element.siblings('.voting_stars').removeClass('text-warning').addClass('text-secondary');
     }
 
@@ -210,23 +287,6 @@ $(document).ready(function(){
         });
     }
 
-    // function changeDescription(element, descriptionData){
-    //     setCSRF();
-    //     $.ajax({
-    //         url: "/admin/categories/updateCat",
-    //         method: "POST",
-    //         dataType: "text",
-    //         data: {
-    //             descriptionData: descriptionData,
-    //             element: element
-    //         }, success: function(r) {
-    //             console.log(r);
-    //         }, error: function(error){
-    //             console.log(error);
-    //         }
-    //     });
-    // }
-
     // removes table related bootstrap classes if screen gets to small
     function tackleClasses(window){
         if($(window).width() <760){
@@ -242,38 +302,6 @@ $(document).ready(function(){
         var retVal = confirm("Do you really want to delete this element?");
         return retVal === true;
     }
-
-    // analyse if the page was refreshed by a event as listed below
-    //   function navigationType() {
-    //
-    //     var result;
-    //     var p;
-    //
-    //     if (window.performance.navigation) {
-    //         result = window.performance.navigation;
-    //         if (result == 255) {
-    //             result = 4
-    //         } // 4 is my invention!
-    //     }
-    //
-    //     if (window.performance.getEntriesByType("navigation")) {
-    //         p = window.performance.getEntriesByType("navigation")[0].type;
-    //
-    //         if (p == 'navigate') {
-    //             result = 0
-    //         }
-    //         if (p == 'reload') {
-    //             result = 1
-    //         }
-    //         if (p == 'back_forward') {
-    //             result = 2
-    //         }
-    //         if (p == 'prerender') {
-    //             result = 3
-    //         } //3 is my invention!
-    //     }
-    //     return result;
-    // }
 
     // checks if something was changed inside an input field
     function gotChanged(element){
@@ -293,12 +321,12 @@ $(document).ready(function(){
 
     // make videos play when hovered over them
     function hoverVideo(e) {
-        if ($('video').length) {
+        if ($('video', this).length){
             $('video', this).get(0).play();
         }
     }
     function hideVideo(e) {
-        if ($('video').length) {
+        if ($('video',this).length) {
             $('video', this).get(0).pause();
         }
     }
