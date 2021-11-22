@@ -357,7 +357,7 @@ class VideoController extends Controller
         }
 
         try{
-            $textToSpeechClient = new TextToSpeechClient();
+            $textToSpeechClient = new TextToSpeechClient(['credentials' => env('GOOGLE_APPLICATION_CREDENTIALS')]);
 
             $input = new SynthesisInput();
             $input->setText($word);
@@ -378,8 +378,8 @@ class VideoController extends Controller
 
             return $soundFileName;
 
-        } catch(Exception $e) {
-            #return back()->with('error', 'This error occured while trying TTS your video title'.$e->getMessage());
+        } catch(\Exception $e) {
+            return back()->with($e->getMessage());
         }
     }
 
