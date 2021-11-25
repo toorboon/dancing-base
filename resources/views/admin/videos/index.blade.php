@@ -107,7 +107,7 @@
                             <img class="card-img-top embed-responsive-item" src="{{ asset('images/novideo.jpg') }}">
                         @endif
                     </div>
-                    <h5 class="card-header">{{ $video->title }} @if($video->sound)<small id="sound_{{ $video->id }}" class="float-right soundbox">&#128362;</small>@endif</h5>
+                    <h5 class="card-header">{{ $video->title }} @if($video->sound)<button id="sound_{{ $video->id }}" class="btn btn-success btn-sm float-right soundbox" title="Click here to here the title in Spanish language!">&#128362;</button>@endif</h5>
                     <div class="card-body">
                         <small class="card-text">{!! $video->description !!}</small>
                         <p class="card-text">

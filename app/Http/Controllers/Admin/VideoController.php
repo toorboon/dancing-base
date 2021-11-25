@@ -309,6 +309,10 @@ class VideoController extends Controller
             $googleBill = new Google();
             $googleBill->characters = $countCharacters;
             $googleBill->save();
+            // Check if old sound can be deleted
+            if ($video->sound){
+                $this->checkSound($video);
+            }
             $video->sound = $TTSfileName;
         }
 
@@ -343,43 +347,51 @@ class VideoController extends Controller
      */
     public function tts($word)
     {
-        // Check if this month TTS is still possible
-        $maxCharacters = 950000;
-        $actualYear = date('Y');
-        $actualMonth = date('m');
-        $googleBillsum = Google::where(DB::raw("YEAR(googles.created_at)"),$actualYear)
-            ->where(DB::raw("MONTH(googles.created_at)"),$actualMonth)
-            ->sum('characters');
+        // Check, if TTS is really necessary
+        $soundFileName = str_replace(' ', '_',$word.'.mp3');
+        $checkDB = Video::where('sound', $soundFileName)->count();
+        if ($checkDB === 0) {
+            // Check if this month TTS is still possible
+            $maxCharacters = 950000;
+            $actualYear = date('Y');
+            $actualMonth = date('m');
+            $googleBillsum = Google::where(DB::raw("YEAR(googles.created_at)"),$actualYear)
+                ->where(DB::raw("MONTH(googles.created_at)"),$actualMonth)
+                ->sum('characters');
 
-        if ($googleBillsum > $maxCharacters) {
-            return back()->with('error', 'TTS not possible in this month! You reached the treshold of '.$maxCharacters.'! Wait one month with more TTS adventures!');
-        }
+            if ($googleBillsum > $maxCharacters) {
+                return back()->with('error', 'TTS not possible in this month! You reached the treshold of '.$maxCharacters.'! Wait one month with more TTS adventures!');
+            }
 
-        try{
-            $textToSpeechClient = new TextToSpeechClient(['credentials' => env('GOOGLE_APPLICATION_CREDENTIALS')]);
+            try {
+                $textToSpeechClient = new TextToSpeechClient(['credentials' => env('GOOGLE_APPLICATION_CREDENTIALS')]);
 
-            $input = new SynthesisInput();
-            $input->setText($word);
-            $voice = new VoiceSelectionParams();
-            $voice->setLanguageCode('es-ES');
+                $input = new SynthesisInput();
+                $input->setText($word);
+                $voice = new VoiceSelectionParams();
+                $voice->setLanguageCode('es-ES');
 
-            // optional language setting
-            $voice->setName('es-ES-Standard-C');
+                // optional language setting
+                $voice->setName('es-ES-Standard-C');
 
-            $audioConfig = new AudioConfig();
-            $audioConfig->setAudioEncoding(AudioEncoding::MP3);
+                $audioConfig = new AudioConfig();
+                $audioConfig->setAudioEncoding(AudioEncoding::MP3);
 
-            $resp = $textToSpeechClient->synthesizeSpeech($input, $voice, $audioConfig);
-            $soundFileName = str_replace(' ', '_',$word.'.mp3');
-            $path = Storage::put('public/sounds/'.$soundFileName, $resp->getAudioContent());
+                $resp = $textToSpeechClient->synthesizeSpeech($input, $voice, $audioConfig);
 
-            $textToSpeechClient->close();
+                $path = Storage::put('public/sounds/' . $soundFileName, $resp->getAudioContent());
 
+                $textToSpeechClient->close();
+
+                return $soundFileName;
+
+            } catch (\Exception $e) {
+                return back()->with($e->getMessage());
+            }
+        } else {
             return $soundFileName;
-
-        } catch(\Exception $e) {
-            return back()->with($e->getMessage());
         }
+
     }
 
     /**
@@ -387,13 +399,16 @@ class VideoController extends Controller
      *
      * @param Video $video
      * @return \Illuminate\Http\RedirectResponse
+     * @throws \Exception
      */
     public function destroy(Video $video)
     {
-        // Delete also the video files
+        // Delete the video files and if present and only single used also the sound file
         Storage::delete('public/videos/'.$video->video);
         Storage::delete('public/videos/'.$video->timelapse);
-
+        if ($video->sound){
+            $this->checkSound($video);
+        }
         $video->delete();
 
         return redirect()->route('admin.videos.index')->with('success', 'Video deleted');
@@ -448,7 +463,7 @@ class VideoController extends Controller
         if ($request['mode'] == 'target') {
             $returnedVideo = Video::findorfail($request['videoId']);
         } else {
-            $returnedVideo = Video::inRandomOrder()->first();
+            $returnedVideo = Video::whereNotNull('sound')->whereNotNull('duration')->inRandomOrder()->first();
         }
             $filePath = $returnedVideo->sound;
             $duration = $returnedVideo->duration;
@@ -459,5 +474,20 @@ class VideoController extends Controller
                 'duration' => $duration,
                 'title' => $title,
             );
+    }
+
+    /**
+     * Check if the sound file for a video can be deleted, or not
+     *
+     * @return bool
+     */
+    public function checkSound($video){
+        $soundToBeDeleted = $video->sound;
+        $soundCount = Video::where('sound', $soundToBeDeleted)->count();
+        if ($soundCount === 1) {
+            Storage::delete('public/sounds/' . $soundToBeDeleted);
+            return true;
+        }
+        return false;
     }
 }

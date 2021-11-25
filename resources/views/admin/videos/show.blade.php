@@ -28,7 +28,7 @@
         <table id="information_box" class="table table-sm table-dark table-bordered">
             <tbody>
                 <tr>
-                    <th scope="row">Title: @if($video->sound)<small class="float-right">&#128362;</small>@endif</th>
+                    <th scope="row">Title: @if($video->sound)<button id="sound_{{ $video->id }}" class="btn btn-success btn-sm float-right soundbox" title="Click here to here the title in Spanish language!">&#128362;</button>@endif</th>
                     <td>{{ $video->title }}</td>
                 </tr>
                 <tr>
