@@ -17,7 +17,6 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use JetBrains\PhpStorm\ArrayShape;
 use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 use Google\Cloud\TextToSpeech\V1\AudioConfig;
 use Google\Cloud\TextToSpeech\V1\AudioEncoding;

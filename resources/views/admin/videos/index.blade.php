@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-{{--    <audio controls='controls' autoplay><source src='data:audio/mpeg;base64,{{base64_encode($test)}}'></audio>--}}
     {{--Select for category--}}
     <div class="row">
         <button id="toolboxtoggler" type="button" class="btn btn-block btn-secondary mx-2" data-toogle="collapse" data-target="#toolbox">Toolbox</button>
