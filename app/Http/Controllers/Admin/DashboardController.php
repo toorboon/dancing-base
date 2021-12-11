@@ -19,7 +19,7 @@ class DashboardController extends Controller
     public function index()
     {
         $categories = Category::all();
-        $users = User::all();
+        $users = User::with('role')->get();
         $tags = Tag::all();
         return view('admin.dashboard')
             ->with('categories', $categories)

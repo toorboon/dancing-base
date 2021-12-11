@@ -116,7 +116,13 @@
                                 {{ $video->users->first()->pivot->progress_index ?? '' }}
                                 "></span>
                             @for($i=0; $i<5; $i++)
-                                <span class="voting_stars text-secondary" data-index="{{ $i+1 }}" title="This is your progress bar for this video">&#10022;</span>
+                                <span class="voting_stars text-secondary" data-index="{{ $i+1 }}" title="This is your progress bar for this video. T makes that video available for the trainer-mode!">
+                                    @if($i < 4)
+                                        &#10022;
+                                    @else
+                                        &#932;
+                                    @endif
+                                </span>
                             @endfor
                         </p>
                     </div>

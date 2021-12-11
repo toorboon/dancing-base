@@ -37,24 +37,29 @@ class VideoController extends Controller
      */
     public function index(Request $request)
     {
-        if ((filled(session('selectedCategory')) || filled(session('selectedProgress'))) && (blank($request['category']) && blank($request['progress_index']) && blank($request['search']) && blank($request['resetSearch']))){
+        if ((filled(session('selectedCategory')) || filled(session('selectedProgress')) || filled(session('page'))) && (blank($request['page'])) && (blank($request['category']) && blank($request['progress_index']) && blank($request['search']) && blank($request['resetSearch']))){
 
             $url = [
                 'category' => session('selectedCategory'),
                 'progress_index' => session('selectedProgress'),
+                'page' => session('page'),
             ];
-
-            if ($request->page) {
-                $url ['page'] = $request->page;
-            }
 
             return redirect()->route('admin.videos.index', $url)
                 ->with('success', Session::get('success'))
                 ->with('error', Session::get('error'));
         }
 
+        if (filled(session('search'))){
+            $request['search'] = session('search');
+        }
+
         $selectedCategory = $request['category'];
         $selectedProgress = $request['progress_index'];
+
+        if ($request->page) {
+            session(['page' => $request->page]);
+        }
 
         $categoryList = Category::all();
 
@@ -86,6 +91,7 @@ class VideoController extends Controller
 
         // Full text search for fields mentioned in Video model
         if ($request->filled('search')) {
+            session(['search' => $request['search']]);
             $videoQuery = $videoQuery->search($request->get('search'));
             $request->flash();
         }
@@ -110,7 +116,10 @@ class VideoController extends Controller
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
-
+        # This clears the page "search criteria" if not needed so to not end up on a paginator page which is not existing
+        if ($items->count() <= $perPage){
+            session()->forget('page');
+        }
         return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     }
 
@@ -352,7 +361,7 @@ class VideoController extends Controller
         $checkDB = Video::where('sound', $soundFileName)->count();
         if ($checkDB === 0) {
             // Check if this month TTS is still possible
-            $maxCharacters = 950000;
+            $maxCharacters = 240000;
             $actualYear = date('Y');
             $actualMonth = date('m');
             $googleBillsum = Google::where(DB::raw("YEAR(googles.created_at)"),$actualYear)
@@ -372,7 +381,7 @@ class VideoController extends Controller
                 $voice->setLanguageCode('es-ES');
 
                 // optional language setting
-                $voice->setName('es-ES-Standard-C');
+                $voice->setName('es-ES-Wavenet-D');
 
                 $audioConfig = new AudioConfig();
                 $audioConfig->setAudioEncoding(AudioEncoding::MP3);
@@ -449,6 +458,8 @@ class VideoController extends Controller
     {
         session()->forget('selectedCategory');
         session()->forget('selectedProgress');
+        session()->forget('page');
+        session()->forget('search');
 
         return 'SearchSession cleared';
     }
@@ -460,11 +471,20 @@ class VideoController extends Controller
      */
     public function playSound(Request $request)
     {
-        if ($request['mode'] == 'target') {
-            $returnedVideo = Video::findorfail($request['videoId']);
-        } else {
-            $returnedVideo = Video::whereNotNull('sound')->whereNotNull('duration')->inRandomOrder()->first();
-        }
+        try {
+            if ($request['mode'] == 'target') {
+                $returnedVideo = Video::findorfail($request['videoId']);
+            } else {
+
+                $returnedVideo = Video::with(['users' => function ($query) {
+                    $query->where('users.id', '=', auth()->user()->id);
+                }])
+                    ->whereHas('users', function ($query) {
+                        $query->where('progress_index', '>', 4)->where('users.id', '=', auth()->user()->id);
+                    })
+                    ->whereNotNull('sound')->whereNotNull('duration')->inRandomOrder()->firstOrFail();
+            }
+
             $filePath = $returnedVideo->sound;
             $duration = $returnedVideo->duration;
             $title = $returnedVideo->title;
@@ -474,6 +494,9 @@ class VideoController extends Controller
                 'duration' => $duration,
                 'title' => $title,
             );
+        } catch (\Exception $e) {
+
+        }
     }
 
     /**

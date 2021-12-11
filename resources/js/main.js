@@ -94,9 +94,13 @@ $(document).ready(function(){
     $('.voting_stars').on('click', function(e){
         e.stopPropagation();
         let progressIndex = parseInt($(this).data('index'));
-        let videoId = $(this).closest('.card').find('video').attr('id').replace(/[^0-9]/g,'');
 
-        saveToDB(videoId, progressIndex);
+        if ($(this).closest('.card').find('video').length > 0) {
+            let videoId = $(this).closest('.card').find('video').attr('id').replace(/[^0-9]/g, '');
+            saveToDB(videoId, progressIndex);
+        } else {
+            alert('You cannot rate a video, without a video, dummy!');
+        }
     });
 
     // event-handler for collapsing toolbox in video.index
@@ -184,12 +188,17 @@ $(document).ready(function(){
                 videoId: videoId,
             },
             success: function(r) {
-                let json = JSON.parse(r);
-                if (mode === 'training') {
-                    trainer(json, mode);
-                }
-                if (mode === 'target') {
-                    soundCheck(json);
+                if (isJson(r)) {
+                    let json = JSON.parse(r);
+
+                    if (mode === 'training') {
+                        trainer(json, mode);
+                    }
+                    if (mode === 'target') {
+                        soundCheck(json);
+                    }
+                } else {
+                    alert('No trainer possible, because no video is in training mode!');
                 }
             }, error: function(error){
                 console.log(error);
@@ -197,6 +206,26 @@ $(document).ready(function(){
         });
     }
 
+    // checks if JSON is valid or broken and returns false if broken
+    function isJson(item) {
+        item = typeof item !== "string"
+            ? JSON.stringify(item)
+            : item;
+
+        try {
+            item = JSON.parse(item);
+        } catch (e) {
+            return false;
+        }
+
+        if (typeof item === "object" && item !== null) {
+            return true;
+        }
+
+        return false;
+    }
+
+    // plays a number of sounds as requested so the Rueda can be practised with a virtual Cantante
     function trainer(json, mode){
         if (cycle <= expectedCycle){
             // Play audio x times
@@ -232,9 +261,7 @@ $(document).ready(function(){
 
     // Draw stars in /videos/show and /videos/index
     function drawStars(index, element){
-        // console.log('in drawStars')
         for (let i=0; i < index; i++) {
-            // console.log($(element).siblings('.voting_stars').eq(i))
             $(element).siblings('.voting_stars').eq(i).removeClass('text-secondary').addClass('text-warning');
         }
     }
@@ -265,7 +292,6 @@ $(document).ready(function(){
                 videoId: videoId,
                 progressIndex: progressIndex
             }, success: function(r){
-                console.log(r);
                 $('#video_'+videoId).closest('.card').find('.progress_index').data('index', progressIndex);
             }, error: function (error){
                 console.log(error);
@@ -280,7 +306,6 @@ $(document).ready(function(){
             url: "/admin/videos/resetSearch",
             method: "POST",
             success: function(r) {
-                console.log(r);
             }, error: function(error){
                 console.log(error);
             }

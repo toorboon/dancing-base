@@ -136,7 +136,8 @@
                                     <tr>
                                         <th>Username</th>
                                         <th>E-Mail</th>
-                                        <th></th>
+                                        <th>Role</th>
+                                        <th>Action</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -155,6 +156,16 @@
                                                         @csrf
                                                         @method('PUT')
                                                         <input type="email" class="input_change" name="email" value="{{ $user->email }}" required>
+                                                    </form>
+                                                </td>
+                                                <td data-label="Role">
+                                                    <form action="{{ route('admin.users.update', $user) }}" method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <select id="role" class="input_change mt-1" name="role">
+                                                            <option value="1" @if($user->role->name == "Admin") selected @endif>Admin</option>
+                                                            <option value="2" @if($user->role->name == "Guest") selected @endif>Guest</option>
+                                                        </select>
                                                     </form>
                                                 </td>
                                                 <td class="d-flex">

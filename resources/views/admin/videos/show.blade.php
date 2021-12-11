@@ -48,7 +48,13 @@
                     <td class="font-weight-bold">
                         <span id="progress_index_{{ $video->id }}" class="d-none progress_index" data-index="{{ $progress_index }}"></span>
                         @for($i=0; $i<5; $i++)
-                            <span class="voting_stars text-secondary" data-index="{{ $i+1 }}">&#10022;</span>
+                            <span class="voting_stars text-secondary" data-index="{{ $i+1 }}">
+                                @if($i < 4)
+                                    &#10022;
+                                @else
+                                    &#932;
+                                @endif
+                            </span>
                         @endfor
                     </td>
                 </tr>

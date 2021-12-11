@@ -38,6 +38,12 @@ class UserController extends Controller
             return back()->with('success', 'User email changed');
         }
 
+        if (isset($request['role'])){
+            $user->role_id = $request['role'];
+            $user->save();
+            return back()->with('success', 'User role changed');
+        }
+
         return back()->with('error', 'Couldn\'t update anything on user');
     }
 

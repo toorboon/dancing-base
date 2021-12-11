@@ -9,14 +9,15 @@
 
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        @auth
+
             <!-- Left Side Of Navbar -->
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item"><a class="nav-link" href="{{ route('about') }}" title="Who is responsible for this thing?">About</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('admin.videos.index') }}" title="Click here to see all the clips in the database">Videos</a></li>
-
+                @auth
+                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.videos.index') }}" title="Click here to see all the clips in the database">Videos</a></li>
+                @endauth
             </ul>
-        @endauth
+
             <!-- Right Side Of Navbar -->
             <ul class="navbar-nav ml-auto">
                 <!-- Authentication Links -->
