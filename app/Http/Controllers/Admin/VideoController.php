@@ -37,30 +37,24 @@ class VideoController extends Controller
      */
     public function index(Request $request)
     {
-        if ((filled(session('selectedCategory')) || filled(session('selectedProgress')) || filled(session('page'))) && (blank($request['page'])) && (blank($request['category']) && blank($request['progress_index']) && blank($request['search']) && blank($request['resetSearch']))){
+        if (filled(session('url'))
 
-            $url = [
-                'category' => session('selectedCategory'),
-                'progress_index' => session('selectedProgress'),
-                'page' => session('page'),
-            ];
+                && blank($request['category'])
+                && blank($request['progress_index'])
+                && blank($request['page'])
+                && blank($request['search'])
+                && blank($request['resetSearch'])
+            ){
 
-            return redirect()->route('admin.videos.index', $url)
+            return redirect()->route('admin.videos.index', session('url'))
                 ->with('success', Session::get('success'))
                 ->with('error', Session::get('error'));
         }
 
-        if (filled(session('search'))){
-            $request['search'] = session('search');
-        }
+        $url = [];
 
         $selectedCategory = $request['category'];
         $selectedProgress = $request['progress_index'];
-
-        if ($request->page) {
-            session(['page' => $request->page]);
-        }
-
         $categoryList = Category::all();
 
         // Get an instance of the videos relationship of the current authenticated user
@@ -72,7 +66,7 @@ class VideoController extends Controller
         // If category search is required
         if($request->filled('category')) {
             // Reset session in every request case where this key is set
-            session(['selectedCategory' => $selectedCategory]);
+            $url['category'] = $selectedCategory;
             if($request->input('category') !== 'all') {
                 $videoQuery = $videoQuery->where('category_id', $request['category']);
             }
@@ -80,7 +74,7 @@ class VideoController extends Controller
 
         // If progress search is required
         if($request->filled('progress_index')){
-            session(['selectedProgress' => $selectedProgress]);
+            $url['progress_index'] = $selectedProgress;
             if($request->input('progress_index') !== 'all') {
                 // Constrain the query : only get the videos with progress_index equal to $selectedProgress
                 $videoQuery = $videoQuery->whereHas('users', function ($query) use ($selectedProgress) {
@@ -91,13 +85,30 @@ class VideoController extends Controller
 
         // Full text search for fields mentioned in Video model
         if ($request->filled('search')) {
-            session(['search' => $request['search']]);
+            $url['search'] = $request['search'];
             $videoQuery = $videoQuery->search($request->get('search'));
             $request->flash();
         }
 
+        // To remember on what page you where if you are coming from a single video
+        // Is there a way to get that alternating page=x variable out of the system?
+        #dd(session()->all(),$url, $request);
+        if ($request->filled('page')) {
+            $url['page'] = $request['page'];
+        }
+
+        session(['url' => $url]);
+        $targetURL = '?';
+        if (filled(session('url'))){
+            $sessionURL = session('url');
+
+            foreach($sessionURL as $key => $item){
+                $targetURL = $targetURL.'&'.$key.'='.$item;
+            }
+        }
+
         $videos = $videoQuery->groupBy('videos.id')->latest()->get();
-        $videos = $this->paginate($videos, 6, null, ['path'=>url('admin/videos')]);
+        $videos = $this->paginate($videos, 6, null, ['path'=>url('admin/videos'.$targetURL)]);
 
         return view('admin.videos.index')
             ->with('videos', $videos)
@@ -112,14 +123,14 @@ class VideoController extends Controller
      *
      * @return LengthAwarePaginator
      */
-    protected function paginate($items, $perPage = 6, $page = null, $options = [])
+    protected function paginate($items, $perPage, $page = null, $options = [])
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
-        # This clears the page "search criteria" if not needed so to not end up on a paginator page which is not existing
-        if ($items->count() <= $perPage){
+        if ($items->count()/$perPage > $page){
             session()->forget('page');
         }
+
         return new LengthAwarePaginator($items->forPage($page, $perPage), $items->count(), $perPage, $page, $options);
     }
 
@@ -456,10 +467,11 @@ class VideoController extends Controller
      */
     public function resetSearch()
     {
-        session()->forget('selectedCategory');
-        session()->forget('selectedProgress');
+        session()->forget('progress_index');
+        session()->forget('category');
         session()->forget('page');
         session()->forget('search');
+        session()->forget('url');
 
         return 'SearchSession cleared';
     }
