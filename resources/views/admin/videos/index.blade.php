@@ -64,12 +64,31 @@
                     {{--Trainer Box--}}
                     <div id="trainerbox" class="collapse mt-1">
                         <div class="d-flex">
-                            <span id="trainerinfo" class="form-control ">Figure display</span>
-                            <input id="expectedCycle" type="number" class="form-control w-25" name="expectedCycle" value="{{ old('cycle') }}" placeholder="Cycles?">
+                            <span id="trainerinfo" class="form-control "></span>
+                            <input id="figureCounter" type="number" class="form-control w-25" name="figureCounter" value="{{ old('cycle') }}" placeholder="#Figures?">
                             <button id="startTrainer" type="button" class="btn btn-success btn-sm">Start</button>
-                            <button id="stopTrainer" type="button" class="btn btn-danger btn-sm">Stop</button>
                         </div>
                     </div>
+                    <!-- Trainer Modal -->
+                    <div class="modal fade" id="trainervideo" tabindex="-1" role="dialog" aria-labelledby="trainervideo" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content w-auto">
+                                <div class="modal-header">
+                                    <h4 id="modalTitle" class="modal-title"></h4>
+                                </div>
+                                <div class="modal-body">
+                                    <video controls id="videobox" muted class="embed-responsive-item">
+                                        Your browser does not support the video tag!
+                                    </video>
+                                </div>
+                                <div class="modal-footer">
+{{--                                    <button id="closeTrainer" type="button" class="btn btn-secondary">Close</button>--}}
+                                    <button id="stopTrainer" type="button" class="btn btn-danger" data-dismiss="modal">Stop trainer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </form>
         </div>
@@ -90,7 +109,7 @@
                         {{--option menu for each video--}}
                         <div class="actions d-flex flex-column justify-content-between p-3">
                             <button type="button" class="btn btn-sm btn-dark"><strong>...</strong></button>
-                            <div id="" class="buttons d-none flex-column align-items-stretch">
+                            <div class="buttons d-none flex-column align-items-stretch">
                                 <a href="{{ route('admin.videos.edit', $video->id) }}" class="btn btn-sm btn-secondary mt-1 w-100">Edit</a>
                                 <form action="{{ action('Admin\VideoController@destroy', $video) }}" method="POST">
                                     @csrf
@@ -109,8 +128,10 @@
                     </div>
                     <h5 class="card-header">{{ $video->title }} @if($video->sound)<button id="sound_{{ $video->id }}" class="btn btn-success btn-sm float-right soundbox" title="Click here to here the title in Spanish language!">&#128362;</button>@endif</h5>
                     <div class="card-body">
-                        <small class="card-text">{!! $video->description !!}</small>
+                        {{--Textbox will be constructed here--}}
+                        <small class="d-block card-text overflow-hidden textbox">{!! $video->description !!}</small>
                         <p class="card-text">
+                            {{--Rating stars goes here!--}}
                             <span id="progress_index_{{ $video->id }}" class="d-none progress_index" data-index="
 
                                 {{ $video->users->first()->pivot->progress_index ?? '' }}

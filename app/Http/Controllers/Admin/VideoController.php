@@ -481,11 +481,13 @@ class VideoController extends Controller
      *
      * @return array
      */
-    public function playSound(Request $request)
+    public function fetchElement(Request $request)
     {
         try {
+            // return only the exact requested video information (for sound replay)
             if ($request['mode'] == 'target') {
                 $returnedVideo = Video::findorfail($request['videoId']);
+            // fetch random video from the ones, which have at least 5 stars ("T")
             } else {
 
                 $returnedVideo = Video::with(['users' => function ($query) {
@@ -497,11 +499,15 @@ class VideoController extends Controller
                     ->whereNotNull('sound')->whereNotNull('duration')->inRandomOrder()->firstOrFail();
             }
 
+            $videoName = $returnedVideo->video;
+            $videoId = $returnedVideo->id;
             $filePath = $returnedVideo->sound;
             $duration = $returnedVideo->duration;
             $title = $returnedVideo->title;
 
             return array(
+                'video' => $videoName,
+                'videoId' => $videoId,
                 'filePath' => $filePath,
                 'duration' => $duration,
                 'title' => $title,

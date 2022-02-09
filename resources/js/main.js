@@ -27,8 +27,8 @@ $(document).ready(function(){
         tokenSeparators: [",", " "],
     });
 
-    let cycle = 0;
-    let expectedCycle = 0;
+    let actualFigureCounter = 1;
+    let figureCounter = 0;
     let timeout = 0;
     let waitingTime = 0;
 
@@ -69,6 +69,35 @@ $(document).ready(function(){
     })
 
     // ### Videos ###
+    // control textbox on /videos/index so they have fixed height with more link
+    // element needs to be "block" and "overflow: hidden", otherwise height cannot be read!
+    $('.textbox').each(function() {
+        var h = this.scrollHeight;
+        var collapsedSize = '80px';
+        var div = $(this);
+        if (h > 80) {
+            div.css('height', collapsedSize);
+            div.after('<button type="button" id="more" class="btn btn-sm btn-secondary mt-2 textbox" >more</button><br/>');
+            var link = div.next();
+            link.click(function(e) {
+                e.stopPropagation();
+
+                if (link.text() !== 'Collapse') {
+                    link.text('Collapse');
+                    div.animate({
+                        'height': h
+                    });
+
+                } else {
+                    div.animate({
+                        'height': collapsedSize
+                    });
+                    link.text('more');
+                }
+            });
+        }
+    });
+
     //Draw stars for video rating
     $('.voting_stars').mouseover(function() {
         let progressIndexElement = $(this).siblings('.progress_index');
@@ -148,39 +177,66 @@ $(document).ready(function(){
         window.location = '/admin/videos?resetSearch=yes';
     });
 
+  //## Trainer feature ##
     //Show trainer box
     $(document).on('click', '#showTrainer', function(){
-        $('#trainerbox').collapse('toggle');
+        const trainerbox = $('#trainerbox');
+        trainerbox.collapse('toggle');
+        if (trainerbox.is(':visible')){
+            document.getElementById('trainerinfo').innerHTML = 'Choose how many figures you want to train!';
+        }
     });
 
-    // Sets the event handler for the trainer function in Actions on /videos
+    // Sets the event handler for starting the trainer function in Actions dropdown on /videos
     $(document).on('click', '#startTrainer', function(){
-        expectedCycle = document.getElementById('expectedCycle').value;
-        cycle = 1;
-        playSound('training', 0);
+        figureCounter = document.getElementById('figureCounter').value;
+        if (figureCounter > 0){
+            // Reset the actualFigureCounter so you can start over again
+            actualFigureCounter = 1;
+
+            // Open the modal so the video can be displayed
+            let modal = $('#trainervideo').modal({
+                keyboard: false,
+                backdrop: 'static',
+            });
+            modal.modal('show');
+
+            playElement('training', 0);
+        } else {
+            alert('You have to choose at least one figure with the figure counter!');
+        }
+    });
+
+    // Handle the closing behaviour of modal for trainer
+    $(document).on('click','#closeTrainer', function(){
+        const trainerModal = $('#trainervideo');
+        if (trainerModal.is(':visible')) {
+            trainerModal.modal('hide');
+        }
     });
 
     // Event handler for stopping the trainer
     $(document).on('click', '#stopTrainer', function(){
-       clearTimeout(timeout);
-       document.getElementById('trainerinfo').innerHTML = 'Training interrupted!';
+        let test = document.querySelector('#videobox')
+        test.pause();
+        test.currentTime = 0;
+        document.getElementById('trainerinfo').innerHTML = 'Training interrupted!';
     });
 
     // Event handler for soundbox
     $(document).on('click', '.soundbox', function(e){
         e.stopPropagation();
         let str = e.target.id;
-        playSound('target', str.replace(/\D/g, ""));
+        playElement('target', str.replace(/\D/g, ""));
     })
 
 // Functions
-
     //### Videos ###
-    // Call the database and fetch one audio file for playing it
-    function playSound(mode, videoId){
+    // Call the database and fetch one audio file for playing it (for training or just soundbox purpose)
+    function playElement(mode, videoId){
         setCSRF();
         $.ajax({
-            url: "/admin/videos/playSound",
+            url: "/admin/videos/fetchElement",
             method: "POST",
             dataType: "text",
             data: {
@@ -198,7 +254,7 @@ $(document).ready(function(){
                         soundCheck(json);
                     }
                 } else {
-                    alert('No trainer possible, because no video is in training mode!');
+                    alert('No training possible, because no video is in training mode! Set at least one to training mode ("T") in the video overview first!');
                 }
             }, error: function(error){
                 console.log(error);
@@ -227,24 +283,34 @@ $(document).ready(function(){
 
     // plays a number of sounds as requested so the Rueda can be practised with a virtual Cantante
     function trainer(json, mode){
-        if (cycle <= expectedCycle){
-            // Play audio x times
+        if (actualFigureCounter <= figureCounter){
+            // Play audo/video x times -> '/storage/sounds/' + json['filePath']
+            // console.log(json)
             const audio = new Audio('/storage/sounds/' + json['filePath']);
-            if (cycle === 1){
-                document.getElementById('trainerinfo').innerHTML = 'Cantante habla: ' + json['title'];
-                const run = audio.play();
-                waitingTime = json['duration'];
-            } else {
-                timeout = setTimeout(function () {
-                    document.getElementById('trainerinfo').innerHTML = 'Cantante habla: ' + json['title'];
-                    const run = audio.play();
-                    waitingTime = json['duration'];
-                }, waitingTime * 1000);
-            }
-            cycle++;
-            audio.addEventListener('ended',function(){playSound(mode)});
-        } else {
-            document.getElementById('trainerinfo').innerHTML = 'End of training reached!';
+            document.getElementById('modalTitle').innerHTML = 'Cantante habla: ' + json['title'];
+            const run = audio.play();
+
+            // init video and make it ready to run
+            let video = document.getElementById('videobox');
+            video.innerHTML = '';
+            let source = document.createElement('source');
+
+            source.setAttribute('src', '/storage/videos/' + json['video']);
+            source.setAttribute('type', 'video/mp4');
+
+            video.appendChild(source);
+            // console.log({src: source.getAttribute('src')})
+            video.load();
+            video.play();
+
+            video.addEventListener('ended',function(){
+                if (actualFigureCounter > figureCounter){
+                    document.getElementById('modalTitle').innerHTML = 'End of training reached!';
+                    document.getElementById('trainerinfo').innerHTML = 'End of training reached!';
+                }
+                playElement(mode)
+            });
+            actualFigureCounter++;
         }
     }
 
