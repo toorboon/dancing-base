@@ -406,7 +406,8 @@ class VideoController extends Controller
                 return $soundFileName;
 
             } catch (\Exception $e) {
-                return back()->with($e->getMessage());
+
+                return back()->with('error', $e->getMessage());
             }
         } else {
             return $soundFileName;
@@ -486,34 +487,32 @@ class VideoController extends Controller
         try {
             // return only the exact requested video information (for sound replay)
             if ($request['mode'] == 'target') {
-                $returnedVideo = Video::findorfail($request['videoId']);
-            // fetch random video from the ones, which have at least 5 stars ("T")
+                $returnedData = Video::where('id', '=', $request['videoId'])->get();
             } else {
-
-                $returnedVideo = Video::with(['users' => function ($query) {
+                // fetch random video from the ones, which have at least 5 stars ("T")
+                $returnedData = Video::with(['users' => function ($query) {
                     $query->where('users.id', '=', auth()->user()->id);
                 }])
                     ->whereHas('users', function ($query) {
                         $query->where('progress_index', '>', 4)->where('users.id', '=', auth()->user()->id);
                     })
-                    ->whereNotNull('sound')->whereNotNull('duration')->inRandomOrder()->firstOrFail();
+                    ->whereNotNull('sound')->whereNotNull('duration')->inRandomOrder()->take($request['limit'])->get();
+
+
+            }
+            $dataArray = array();
+            foreach ($returnedData as $key => $video){
+                $dataArray[$key]['videoPath'] = $video->video;
+                $dataArray[$key]['videoId'] = $video->id;
+                $dataArray[$key]['soundPath'] = $video->sound;
+                $dataArray[$key]['duration'] = $video->duration;
+                $dataArray[$key]['title'] = $video->title;
             }
 
-            $videoName = $returnedVideo->video;
-            $videoId = $returnedVideo->id;
-            $filePath = $returnedVideo->sound;
-            $duration = $returnedVideo->duration;
-            $title = $returnedVideo->title;
+            return  $dataArray;
 
-            return array(
-                'video' => $videoName,
-                'videoId' => $videoId,
-                'filePath' => $filePath,
-                'duration' => $duration,
-                'title' => $title,
-            );
         } catch (\Exception $e) {
-
+            return $e[0]->getMessage();
         }
     }
 

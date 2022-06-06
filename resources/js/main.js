@@ -27,11 +27,6 @@ $(document).ready(function(){
         tokenSeparators: [",", " "],
     });
 
-    let actualFigureCounter = 1;
-    let figureCounter = 0;
-    let timeout = 0;
-    let waitingTime = 0;
-
     // if localStorage toolboxOpen is set you want to display the toolbox open. Only the user can
     // close the toolbox, once it was opened
     if (localStorage.getItem('toolboxOpen')){
@@ -189,10 +184,8 @@ $(document).ready(function(){
 
     // Sets the event handler for starting the trainer function in Actions dropdown on /videos
     $(document).on('click', '#startTrainer', function(){
-        figureCounter = document.getElementById('figureCounter').value;
+        let figureCounter = document.getElementById('figureCounter').value;
         if (figureCounter > 0){
-            // Reset the actualFigureCounter so you can start over again
-            actualFigureCounter = 1;
 
             // Open the modal so the video can be displayed
             let modal = $('#trainervideo').modal({
@@ -201,25 +194,25 @@ $(document).ready(function(){
             });
             modal.modal('show');
 
-            playElement('training', 0);
+            playElement('training', 0, figureCounter);
         } else {
             alert('You have to choose at least one figure with the figure counter!');
         }
     });
 
-    // Handle the closing behaviour of modal for trainer
-    $(document).on('click','#closeTrainer', function(){
-        const trainerModal = $('#trainervideo');
-        if (trainerModal.is(':visible')) {
-            trainerModal.modal('hide');
-        }
-    });
+    // Handle the closing behaviour of modal for trainer -> button deactivated in trainer for sanity reasons
+    // $(document).on('click','#closeTrainer', function(){
+    //     const trainerModal = $('#trainervideo');
+    //     if (trainerModal.is(':visible')) {
+    //         trainerModal.modal('hide');
+    //     }
+    // });
 
     // Event handler for stopping the trainer
     $(document).on('click', '#stopTrainer', function(){
-        let test = document.querySelector('#videobox')
-        test.pause();
-        test.currentTime = 0;
+        let trainerbox = document.querySelector('#videobox')
+        trainerbox.pause();
+        trainerbox.currentTime = 0;
         document.getElementById('trainerinfo').innerHTML = 'Training interrupted!';
     });
 
@@ -233,7 +226,7 @@ $(document).ready(function(){
 // Functions
     //### Videos ###
     // Call the database and fetch one audio file for playing it (for training or just soundbox purpose)
-    function playElement(mode, videoId){
+    function playElement(mode, videoId, limit = 1){
         setCSRF();
         $.ajax({
             url: "/admin/videos/fetchElement",
@@ -242,16 +235,17 @@ $(document).ready(function(){
             data: {
                 mode: mode,
                 videoId: videoId,
+                limit: limit,
             },
             success: function(r) {
                 if (isJson(r)) {
                     let json = JSON.parse(r);
 
                     if (mode === 'training') {
-                        trainer(json, mode);
+                        trainer(json, json.length-1);
                     }
                     if (mode === 'target') {
-                        soundCheck(json);
+                        soundCheck(json[0]['soundPath']);
                     }
                 } else {
                     alert('No training possible, because no video is in training mode! Set at least one to training mode ("T") in the video overview first!');
@@ -274,49 +268,45 @@ $(document).ready(function(){
             return false;
         }
 
-        if (typeof item === "object" && item !== null) {
-            return true;
-        }
-
-        return false;
+        return typeof item === "object" && item !== null;
     }
 
     // plays a number of sounds as requested so the Rueda can be practised with a virtual Cantante
-    function trainer(json, mode){
-        if (actualFigureCounter <= figureCounter){
-            // Play audo/video x times -> '/storage/sounds/' + json['filePath']
-            // console.log(json)
-            const audio = new Audio('/storage/sounds/' + json['filePath']);
-            document.getElementById('modalTitle').innerHTML = 'Cantante habla: ' + json['title'];
-            const run = audio.play();
-
-            // init video and make it ready to run
-            let video = document.getElementById('videobox');
-            video.innerHTML = '';
-            let source = document.createElement('source');
-
-            source.setAttribute('src', '/storage/videos/' + json['video']);
-            source.setAttribute('type', 'video/mp4');
-
-            video.appendChild(source);
-            // console.log({src: source.getAttribute('src')})
-            video.load();
-            video.play();
-
-            video.addEventListener('ended',function(){
-                if (actualFigureCounter > figureCounter){
-                    document.getElementById('modalTitle').innerHTML = 'End of training reached!';
-                    document.getElementById('trainerinfo').innerHTML = 'End of training reached!';
-                }
-                playElement(mode)
-            });
-            actualFigureCounter++;
+    function trainer(json, runCounter){
+        if (runCounter < 0){
+            document.getElementById('modalTitle').innerHTML = 'End of training reached!';
+            document.getElementById('trainerinfo').innerHTML = 'End of training reached!';
+            return
         }
+        let soundPath = json[runCounter]['soundPath'];
+        let title = json[runCounter]['title'];
+        let videoPath = json[runCounter]['videoPath'];
+
+        const audio = new Audio('/storage/sounds/' + soundPath);
+        document.getElementById('modalTitle').innerHTML = 'Cantante habla: ' + title;
+        const run = audio.play();
+
+        // init video and make it ready to run
+        let video = document.getElementById('videobox');
+        video.innerHTML = '';
+        let source = document.createElement('source');
+
+        source.setAttribute('src', '/storage/videos/' + videoPath);
+        source.setAttribute('type', 'video/mp4');
+
+        video.appendChild(source);
+        video.load();
+        video.play();
+
+        video.addEventListener('ended',function(){
+            runCounter--;
+            trainer(json, runCounter);
+        });
     }
 
     // function to play just one sound
-    function soundCheck(json) {
-        const audio = new Audio('/storage/sounds/' + json['filePath']);
+    function soundCheck(soundPath) {
+        const audio = new Audio('/storage/sounds/' + soundPath);
         const run = audio.play();
     }
 
