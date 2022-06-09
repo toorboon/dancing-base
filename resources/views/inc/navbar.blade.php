@@ -42,13 +42,14 @@
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                 @csrf
                             </form>
-
-                            <a class="dropdown-item" href="{{ route('admin.dashboard.index') }}">Dashboard</a>
-                            @if (Route::has('register'))
-                                <a class="dropdown-item" href="{{ route('register') }}">Create User</a>
-                            @endif
-                            <a class="dropdown-item" href="{{ route('admin.categories.create') }}">Create Category</a>
-                            <a class="dropdown-item" href="{{ route('admin.videos.create') }}">Upload Video</a>
+                            @can('manage-app')
+                                <a class="dropdown-item" href="{{ route('admin.dashboard.index') }}">Dashboard</a>
+                                @if (Route::has('register'))
+                                    <a class="dropdown-item" href="{{ route('register') }}">Create User</a>
+                                @endif
+                                <a class="dropdown-item" href="{{ route('admin.categories.create') }}">Create Category</a>
+                                <a class="dropdown-item" href="{{ route('admin.videos.create') }}">Upload Video</a>
+                            @endcan
                         </div>
                     </li>
                 @endguest

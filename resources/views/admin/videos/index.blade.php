@@ -54,7 +54,9 @@
                                         Actions <span class="caret"></span>
                                     </a>
                                     <div class="dropdown-menu" aria-labelledby="actionDropdown">
-                                        <a class="dropdown-item" href="{{ route('admin.videos.create') }}">Upload Video</a>
+                                        @can('manage-app')
+                                            <a class="dropdown-item" href="{{ route('admin.videos.create') }}">Upload Video</a>
+                                        @endcan
                                         <a id="showTrainer" class="dropdown-item">Trainer</a>
                                     </div>
                                 </li>
@@ -107,17 +109,19 @@
                 <div class="card h-100 border-secondary">
                     <div class="embed-responsive embed-responsive-4by3">
                         {{--option menu for each video--}}
-                        <div class="actions d-flex flex-column justify-content-between p-3">
-                            <button type="button" class="btn btn-sm btn-dark"><strong>...</strong></button>
-                            <div class="buttons d-none flex-column align-items-stretch">
-                                <a href="{{ route('admin.videos.edit', $video->id) }}" class="btn btn-sm btn-secondary mt-1 w-100">Edit</a>
-                                <form action="{{ action('Admin\VideoController@destroy', $video) }}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-secondary mt-1 w-100">Delete</button>
-                                </form>
+                        @can('manage-app')
+                            <div class="actions d-flex flex-column justify-content-between p-3">
+                                <button type="button" class="btn btn-sm btn-dark"><strong>...</strong></button>
+                                <div class="buttons d-none flex-column align-items-stretch">
+                                    <a href="{{ route('admin.videos.edit', $video->id) }}" class="btn btn-sm btn-secondary mt-1 w-100">Edit</a>
+                                    <form action="{{ action('Admin\VideoController@destroy', $video) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-secondary mt-1 w-100">Delete</button>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
+                        @endcan
                         @if($video->timelapse)
                             <video id="video_{{ $video->id }}" muted class="card-img-top embed-responsive-item"><source src="/storage/videos/{{ $video->timelapse }}" type="video/webm" >
                                 Your browser does not support the video tag!
@@ -126,7 +130,17 @@
                             <img class="card-img-top embed-responsive-item" src="{{ asset('images/novideo.jpg') }}">
                         @endif
                     </div>
-                    <h5 class="card-header">{{ $video->title }} @if($video->sound)<button id="sound_{{ $video->id }}" class="btn btn-success btn-sm float-right soundbox" title="Click here to here the title in Spanish language!">&#128362;</button>@endif</h5>
+                    <h5 class="card-header">{{ $video->title }}
+                        @if($video->sound)<button id="sound_{{ $video->id }}" class="btn btn-success btn-sm float-right soundbox ml-1" title="Click here to here the title in Spanish language!">&#128362;</button>
+                        @endif
+                        @can('manage-app')
+                            <button id="publish_{{ $video->id }}" class="btn btn-info btn-sm float-right publishbutton" title="Click here to publish the video for the students!">
+                            @if($video->published === 1)Published
+                            @else Unpublished
+                            @endif
+                            </button>
+                        @endcan
+                    </h5>
                     <div class="card-body">
                         {{--Textbox will be constructed here--}}
                         <small class="d-block card-text overflow-hidden textbox">{!! $video->description !!}</small>

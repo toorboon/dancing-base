@@ -63,6 +63,11 @@ class VideoController extends Controller
             $query->where('users.id', '=', auth()->user()->id);
             }])->with('videocreator');
 
+        // Check if role allows to see unpublished videos or not
+        if (auth()->user()->hasRole('Guest')) {
+            $videoQuery = $videoQuery->where('published', '=', 1);
+        }
+
         // If category search is required
         if($request->filled('category')) {
             // Reset session in every request case where this key is set
@@ -109,6 +114,13 @@ class VideoController extends Controller
 
         $videos = $videoQuery->groupBy('videos.id')->latest()->get();
         $videos = $this->paginate($videos, 6, null, ['path'=>url('admin/videos'.$targetURL)]);
+
+        // Check, if any sound file is missing on the server and if it is missing remove it from the video
+        foreach ($videos as $video){
+            if (!Storage::exists('public/sounds/'.$video->sound)){
+                $video->sound = null;
+            }
+        }
 
         return view('admin.videos.index')
             ->with('videos', $videos)
@@ -275,7 +287,16 @@ class VideoController extends Controller
             }
         }
 
-        $video = Video::findOrFail($id);
+        // Check if role allows to see unpublished videos or not
+        if (auth()->user()->hasRole('Guest')) {
+            $video = Video::where('published', '=', 1);
+        }
+        $video = $video->findOrFail($id);
+
+        // Check, if the sound file is missing on the server and if it is missing remove it from the video
+        if (!Storage::exists('public/sounds/'.$video->sound)){
+            $video->sound = null;
+        }
 
         return view('admin.videos.show')
             ->with('video', $video)
@@ -325,6 +346,10 @@ class VideoController extends Controller
 
         if ($request['tts'] && !Storage::exists('public/sounds/'.$soundFileName)) {
 
+            // Check if old sound can be deleted
+            if ($video->sound){
+                $this->checkSound($video);
+            }
             // Call tts() and send the data to Google and get an .mp3 back
             $TTSfileName = $this->tts($request['title']);
             $countCharacters = mb_strlen($request['title']);
@@ -332,10 +357,7 @@ class VideoController extends Controller
             $googleBill = new Google();
             $googleBill->characters = $countCharacters;
             $googleBill->save();
-            // Check if old sound can be deleted
-            if ($video->sound){
-                $this->checkSound($video);
-            }
+
             $video->sound = $TTSfileName;
         }
 
@@ -521,11 +543,33 @@ class VideoController extends Controller
     public function checkSound($video){
         $soundToBeDeleted = $video->sound;
         $soundCount = Video::where('sound', $soundToBeDeleted)->count();
-        if ($soundCount === 1) {
+        if ($soundCount > 0) {
             Storage::delete('public/sounds/' . $soundToBeDeleted);
             $video->sound = null;
             return true;
         }
         return false;
+    }
+
+    /**
+     * Publish the video for all user to train on it
+     *
+     * @return bool
+     */
+    public function publish(Request $request){
+        $videoIdStr = $request['videoIdStr'];
+
+        $videoId = preg_replace("/\D/", "",$videoIdStr);
+        $video = Video::findOrFail($videoId);
+
+        if ($video->published === 0){
+            $video->published = 1;
+            $video->save();
+            return true;
+        } else {
+            $video->published = 0;
+            $video->save();
+            return false;
+        }
     }
 }

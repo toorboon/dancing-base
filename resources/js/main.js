@@ -223,8 +223,38 @@ $(document).ready(function(){
         playElement('target', str.replace(/\D/g, ""));
     })
 
+    // Event handler for publish button
+    $(document).on('click', '.publishbutton', function(e){
+        e.stopPropagation();
+        publishElement(e.target.id);
+    })
+
 // Functions
     //### Videos ###
+    // Publish or unpublish the video depending on publish status
+    function publishElement(videoIdStr){
+        setCSRF();
+        $.ajax({
+            url: "/admin/videos/publish",
+            method: "POST",
+            dataType: "text",
+            data: {
+                videoIdStr: videoIdStr,
+            },
+            success: function(r) {
+                let publishButton = document.getElementById(videoIdStr);
+                // if true -> video got published, if false -> video got unpublished
+               if(r) {
+                   publishButton.innerHTML = 'Published';
+               } else {
+                   publishButton.innerHTML = 'Unpublished';
+               }
+            }, error: function(error){
+                console.log(error);
+            }
+        });
+    }
+
     // Call the database and fetch one audio file for playing it (for training or just soundbox purpose)
     function playElement(mode, videoId, limit = 1){
         setCSRF();
@@ -307,7 +337,13 @@ $(document).ready(function(){
     // function to play just one sound
     function soundCheck(soundPath) {
         const audio = new Audio('/storage/sounds/' + soundPath);
-        const run = audio.play();
+        // $.get('/storage/sounds/' + soundPath, function(data, status) {
+        //     console.log("File request status: "+status);
+        // });
+
+        audio.addEventListener("canplay",event=> {
+           audio.play();
+        })
     }
 
     // Clear searches
